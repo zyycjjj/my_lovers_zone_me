@@ -118,6 +118,8 @@ Add GitHub Actions secrets:
 - PHOTO_MAX_MB
 - SWAGGER_URL
 
+DEPLOY_PORT can be omitted and defaults to 22.
+
 Push to main to deploy.
 
 ## Domain Modules
