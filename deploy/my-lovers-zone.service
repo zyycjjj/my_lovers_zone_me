@@ -1,0 +1,13 @@
+[Unit]
+Description=My Lovers Zone API
+After=network.target
+
+[Service]
+WorkingDirectory=/srv/my_lovers_zone_me
+ExecStart=/usr/bin/node dist/main
+Restart=always
+Environment=NODE_ENV=production
+EnvironmentFile=/srv/my_lovers_zone_me/.env
+
+[Install]
+WantedBy=multi-user.target
