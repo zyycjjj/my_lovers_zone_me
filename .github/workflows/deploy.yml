@@ -1,0 +1,60 @@
+name: deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+      - run: pnpm run build
+      - run: mkdir -p uploads
+
+      - name: write env
+        run: |
+          cat > .env <<EOF
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          PORT=${{ secrets.PORT }}
+          APP_TIMEZONE=${{ secrets.APP_TIMEZONE }}
+          AI_BASE_URL=${{ secrets.AI_BASE_URL }}
+          AI_API_KEY=${{ secrets.AI_API_KEY }}
+          AI_MODEL=${{ secrets.AI_MODEL }}
+          ADMIN_PASS=${{ secrets.ADMIN_PASS }}
+          UPLOAD_DIR=${{ secrets.UPLOAD_DIR }}
+          PUBLIC_BASE_URL=${{ secrets.PUBLIC_BASE_URL }}
+          PHOTO_MAX_MB=${{ secrets.PHOTO_MAX_MB }}
+          SWAGGER_URL=${{ secrets.SWAGGER_URL }}
+          EOF
+
+      - name: add ssh key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.DEPLOY_PORT }}" -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: deploy
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_SERVICE: ${{ secrets.DEPLOY_SERVICE }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: ./scripts/deploy.sh

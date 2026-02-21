@@ -90,10 +90,35 @@ Set deploy env and push:
 ```
 export DEPLOY_HOST=example.com
 export DEPLOY_USER=ubuntu
+export DEPLOY_PORT=22
 export DEPLOY_PATH=/srv/my_lovers_zone_me
 export DEPLOY_SERVICE=my-lovers-zone
 make deploy
 ```
+
+## CI Deploy
+
+Add GitHub Actions secrets:
+
+- DEPLOY_HOST
+- DEPLOY_USER
+- DEPLOY_PORT
+- DEPLOY_PATH
+- DEPLOY_SERVICE
+- DEPLOY_SSH_KEY
+- DATABASE_URL
+- PORT
+- APP_TIMEZONE
+- AI_BASE_URL
+- AI_API_KEY
+- AI_MODEL
+- ADMIN_PASS
+- UPLOAD_DIR
+- PUBLIC_BASE_URL
+- PHOTO_MAX_MB
+- SWAGGER_URL
+
+Push to main to deploy.
 
 ## Domain Modules
 
