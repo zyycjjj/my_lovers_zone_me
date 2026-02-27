@@ -28,7 +28,7 @@ CREATE TABLE `Signal` (
 CREATE TABLE `Event` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
-    `type` ENUM('tool_used', 'signal_sent') NOT NULL,
+    `type` ENUM('tool_used', 'signal_sent', 'button_used') NOT NULL,
     `toolKey` VARCHAR(32) NOT NULL,
     `count` INTEGER NOT NULL DEFAULT 0,
     `date` VARCHAR(10) NOT NULL,
