@@ -9,6 +9,7 @@ datasource db {
 enum EventType {
   tool_used
   signal_sent
+  button_used
 }
 
 model User {

@@ -42,6 +42,8 @@ jobs:
           PHOTO_MAX_MB=${{ secrets.PHOTO_MAX_MB }}
           SWAGGER_URL=${{ secrets.SWAGGER_URL }}
           EOF
+      - name: prisma migrate deploy
+        run: pnpm prisma migrate deploy --schema prisma/schema.prisma
       - name: validate secrets
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}

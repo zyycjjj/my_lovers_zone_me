@@ -7,7 +7,7 @@ import { SignalService } from './signal.service';
 
 @ApiTags('signal')
 @ApiBearerAuth('UserToken')
-@Controller('signal')
+@Controller('api/signal')
 @UseGuards(UserGuard)
 export class SignalController {
   constructor(private readonly signals: SignalService) {}

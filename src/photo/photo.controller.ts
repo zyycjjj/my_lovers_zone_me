@@ -40,7 +40,7 @@ function getPublicUrl(filename: string) {
 
 @ApiTags('photo')
 @ApiBearerAuth('UserToken')
-@Controller('photo')
+@Controller('api/photo')
 @UseGuards(UserGuard)
 export class PhotoController {
   constructor(private readonly photos: PhotoService) {}

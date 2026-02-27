@@ -15,6 +15,16 @@ export class EchoService {
     });
   }
 
+  async createByToken(token: string, payload: EchoDto) {
+    const user = await this.prisma.user.upsert({
+      where: { token },
+      create: { token },
+      update: {},
+      select: { id: true },
+    });
+    return this.create(user.id, payload);
+  }
+
   async latest(userId: number) {
     return this.prisma.echo.findMany({
       where: { userId },

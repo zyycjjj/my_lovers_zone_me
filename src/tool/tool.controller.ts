@@ -10,7 +10,7 @@ import { ToolService } from './tool.service';
 
 @ApiTags('tool')
 @ApiBearerAuth('UserToken')
-@Controller('tool')
+@Controller('api/tool')
 @UseGuards(UserGuard)
 export class ToolController {
   constructor(private readonly tools: ToolService) {}

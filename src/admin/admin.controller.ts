@@ -3,9 +3,9 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '../auth/admin.guard';
 import { AdminService } from './admin.service';
 
-@ApiTags('admin')
+@ApiTags('me')
 @ApiBearerAuth('AdminPass')
-@Controller('admin')
+@Controller('api/me')
 @UseGuards(AdminGuard)
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
