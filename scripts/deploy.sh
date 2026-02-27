@@ -45,5 +45,22 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
   pnpm install --prod
   pnpm prisma generate --schema prisma/schema.prisma
   pnpm prisma migrate deploy --schema prisma/schema.prisma
-  sudo -n systemctl restart ${DEPLOY_SERVICE}
+  # 安装并启用 systemd 服务（若尚未安装）
+  SERVICE_FILE=\"/etc/systemd/system/${DEPLOY_SERVICE}.service\"
+  SOURCE_FILE=\"${DEPLOY_PATH}/deploy/${DEPLOY_SERVICE}.service\"
+  if [ ! -f \"\${SERVICE_FILE}\" ]; then
+    if [ -f \"\${SOURCE_FILE}\" ]; then
+      echo \"[deploy] Installing systemd unit: \${SERVICE_FILE}\"
+      sudo -n cp \"\${SOURCE_FILE}\" \"\${SERVICE_FILE}\"
+      sudo -n /usr/bin/systemctl daemon-reload
+      sudo -n /usr/bin/systemctl enable \"${DEPLOY_SERVICE}\"
+    else
+      echo \"[deploy] ERROR: source unit not found at \${SOURCE_FILE}\"
+      exit 1
+    fi
+  else
+    echo \"[deploy] Unit already exists: \${SERVICE_FILE}\"
+    sudo -n /usr/bin/systemctl daemon-reload
+  fi
+  sudo -n /usr/bin/systemctl restart ${DEPLOY_SERVICE}
 "
