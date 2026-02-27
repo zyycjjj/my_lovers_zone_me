@@ -28,6 +28,15 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
   cd ${DEPLOY_PATH}
   # 清理可能存在的 dist 中的 prisma.config.js 避免 Prisma 误读
   rm -f dist/prisma.config.js dist/prisma.config.cjs dist/prisma.config.ts || true
+  echo \"[deploy] CWD: \$(pwd)\"
+  echo \"[deploy] List root:\"
+  ls -la || true
+  echo \"[deploy] List prisma:\"
+  ls -la prisma || true
+  if [ ! -f prisma/schema.prisma ]; then
+    echo \"[deploy] ERROR: prisma/schema.prisma not found in \$(pwd)\"
+    exit 1
+  fi
   pnpm install --prod
   pnpm prisma generate --schema prisma/schema.prisma
   pnpm prisma migrate deploy --schema prisma/schema.prisma
