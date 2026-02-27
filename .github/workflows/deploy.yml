@@ -22,10 +22,7 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm prisma generate
-        env:
-          PRISMA_CONFIG: prisma.config.mjs
-        shell: bash
+      - run: pnpm prisma generate --schema prisma/schema.prisma
       - run: pnpm run build
       - run: mkdir -p uploads
 
@@ -102,5 +99,4 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           DEPLOY_SERVICE: ${{ secrets.DEPLOY_SERVICE }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          PRISMA_CONFIG: prisma.config.mjs
         run: ./scripts/deploy.sh
