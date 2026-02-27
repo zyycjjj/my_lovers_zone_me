@@ -26,6 +26,8 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
   fi
   pnpm --version
   cd ${DEPLOY_PATH}
+  # 清理可能存在的 dist 中的 prisma.config.js 避免 Prisma 误读
+  rm -f dist/prisma.config.js dist/prisma.config.cjs dist/prisma.config.ts || true
   pnpm install --prod
   pnpm prisma generate --schema prisma/schema.prisma
   pnpm prisma migrate deploy --schema prisma/schema.prisma
