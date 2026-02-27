@@ -27,7 +27,7 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
   pnpm --version
   cd ${DEPLOY_PATH}
   pnpm install --prod
-  pnpm prisma generate
-  pnpm prisma migrate deploy
+  pnpm prisma generate --config prisma.config.mjs
+  pnpm prisma migrate deploy --config prisma.config.mjs
   sudo -n systemctl restart ${DEPLOY_SERVICE}
 "
