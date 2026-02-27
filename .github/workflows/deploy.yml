@@ -64,24 +64,34 @@ jobs:
           fi
 
       - name: add ssh key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+          ssh-passphrase: ${{ secrets.DEPLOY_SSH_PASSPHRASE }}
+
+      - name: known hosts
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          if [ -z "${DEPLOY_SSH_KEY:-}" ]; then
-            echo "DEPLOY_SSH_KEY is empty"; exit 1;
-          fi
-          printf "%s\n" "${DEPLOY_SSH_KEY}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
           PORT="${DEPLOY_PORT}"
           if [ -z "$PORT" ]; then PORT=22; fi
           if [ -z "${DEPLOY_HOST:-}" ]; then
             echo "DEPLOY_HOST is empty"; exit 1;
           fi
           ssh-keyscan -p "$PORT" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+
+      - name: ssh preflight
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          PORT="${DEPLOY_PORT}"
+          if [ -z "$PORT" ]; then PORT=22; fi
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=no -p "$PORT" "${DEPLOY_USER}@${DEPLOY_HOST}" "echo ok"
 
       - name: deploy
         env:

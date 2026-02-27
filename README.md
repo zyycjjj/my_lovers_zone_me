@@ -106,6 +106,7 @@ Add GitHub Actions secrets:
 - DEPLOY_PATH
 - DEPLOY_SERVICE
 - DEPLOY_SSH_KEY
+- DEPLOY_SSH_PASSPHRASE (if your key has passphrase)
 - DATABASE_URL
 - PORT
 - APP_TIMEZONE

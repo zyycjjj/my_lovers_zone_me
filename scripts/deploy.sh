@@ -8,6 +8,6 @@ if [[ -z "${DEPLOY_SERVICE:-}" ]]; then echo "Missing DEPLOY_SERVICE"; exit 1; f
 
 DEPLOY_PORT="${DEPLOY_PORT:-22}"
 
-rsync -az --delete -e "ssh -p ${DEPLOY_PORT}" dist/ uploads/ package.json pnpm-lock.yaml prisma/ .env "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+rsync -az --delete -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" dist/ uploads/ package.json pnpm-lock.yaml prisma/ .env "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
 
-ssh -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "cd ${DEPLOY_PATH} && pnpm install --prod && pnpm prisma generate && pnpm prisma migrate deploy && sudo -n systemctl restart ${DEPLOY_SERVICE}"
+ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "cd ${DEPLOY_PATH} && pnpm install --prod && pnpm prisma generate && pnpm prisma migrate deploy && sudo -n systemctl restart ${DEPLOY_SERVICE}"
