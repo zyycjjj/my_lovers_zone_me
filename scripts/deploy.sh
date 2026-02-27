@@ -8,7 +8,8 @@ if [[ -z "${DEPLOY_SERVICE:-}" ]]; then echo "Missing DEPLOY_SERVICE"; exit 1; f
 
 DEPLOY_PORT="${DEPLOY_PORT:-22}"
 
-rsync -az --delete -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" dist/ uploads/ package.json pnpm-lock.yaml prisma/ prisma.config.mjs .env deploy/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+# 注意：dist 不要带尾部斜杠，否则只会同步内容，导致远端缺少 dist 目录
+rsync -az --delete -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" dist uploads/ package.json pnpm-lock.yaml prisma/ prisma.config.mjs .env deploy/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
 
 ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "DEPLOY_PATH='${DEPLOY_PATH}' DEPLOY_SERVICE='${DEPLOY_SERVICE}' bash -s" <<'REMOTE'
 set -euo pipefail
