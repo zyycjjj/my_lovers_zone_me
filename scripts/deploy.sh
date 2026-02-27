@@ -46,13 +46,17 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
   pnpm prisma generate --schema prisma/schema.prisma
   pnpm prisma migrate deploy --schema prisma/schema.prisma
   # 安装并启用 systemd 服务（若尚未安装）
-  SERVICE_NAME=\"${DEPLOY_SERVICE}\"
-  if [ -z \"${SERVICE_NAME}\" ]; then
+  SERVICE_NAME=\"\${DEPLOY_SERVICE:-}\"
+  if [ -z \"\${SERVICE_NAME}\" ]; then
     CANDIDATE=\$(ls -1 deploy/*.service 2>/dev/null | head -n1 || true)
     if [ -n \"\${CANDIDATE}\" ]; then
       SERVICE_NAME=\$(basename \"\${CANDIDATE}\" .service)
       echo \"[deploy] DEPLOY_SERVICE not set, detected service name: \${SERVICE_NAME}\"
     fi
+  fi
+  if [ -z \"\${SERVICE_NAME}\" ]; then
+    echo \"[deploy] ERROR: service name is empty (DEPLOY_SERVICE not set and no deploy/*.service found)\"
+    exit 1
   fi
   SERVICE_FILE=\"/etc/systemd/system/\${SERVICE_NAME}.service\"
   SOURCE_FILE=\"${DEPLOY_PATH}/deploy/\${SERVICE_NAME}.service\"
