@@ -46,14 +46,29 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
   pnpm prisma generate --schema prisma/schema.prisma
   pnpm prisma migrate deploy --schema prisma/schema.prisma
   # 安装并启用 systemd 服务（若尚未安装）
-  SERVICE_FILE=\"/etc/systemd/system/${DEPLOY_SERVICE}.service\"
-  SOURCE_FILE=\"${DEPLOY_PATH}/deploy/${DEPLOY_SERVICE}.service\"
+  SERVICE_NAME=\"${DEPLOY_SERVICE}\"
+  if [ -z \"${SERVICE_NAME}\" ]; then
+    CANDIDATE=\$(ls -1 deploy/*.service 2>/dev/null | head -n1 || true)
+    if [ -n \"\${CANDIDATE}\" ]; then
+      SERVICE_NAME=\$(basename \"\${CANDIDATE}\" .service)
+      echo \"[deploy] DEPLOY_SERVICE not set, detected service name: \${SERVICE_NAME}\"
+    fi
+  fi
+  SERVICE_FILE=\"/etc/systemd/system/\${SERVICE_NAME}.service\"
+  SOURCE_FILE=\"${DEPLOY_PATH}/deploy/\${SERVICE_NAME}.service\"
+  if [ ! -f \"\${SOURCE_FILE}\" ]; then
+    ALT_SOURCE=\"${DEPLOY_PATH}/\${SERVICE_NAME}.service\"
+    if [ -f \"\${ALT_SOURCE}\" ]; then
+      echo \"[deploy] Fallback service file found at project root: \${ALT_SOURCE}\"
+      SOURCE_FILE=\"\${ALT_SOURCE}\"
+    fi
+  fi
   if [ ! -f \"\${SERVICE_FILE}\" ]; then
     if [ -f \"\${SOURCE_FILE}\" ]; then
       echo \"[deploy] Installing systemd unit: \${SERVICE_FILE}\"
       sudo -n cp \"\${SOURCE_FILE}\" \"\${SERVICE_FILE}\"
       sudo -n /usr/bin/systemctl daemon-reload
-      sudo -n /usr/bin/systemctl enable \"${DEPLOY_SERVICE}\"
+      sudo -n /usr/bin/systemctl enable \"\${SERVICE_NAME}\"
     else
       echo \"[deploy] ERROR: source unit not found at \${SOURCE_FILE}\"
       exit 1
@@ -62,5 +77,5 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
     echo \"[deploy] Unit already exists: \${SERVICE_FILE}\"
     sudo -n /usr/bin/systemctl daemon-reload
   fi
-  sudo -n /usr/bin/systemctl restart ${DEPLOY_SERVICE}
+  sudo -n /usr/bin/systemctl restart \"\${SERVICE_NAME}\"
 "
