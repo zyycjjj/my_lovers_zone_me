@@ -119,6 +119,7 @@ Add GitHub Actions secrets:
 - SWAGGER_URL
 
 DEPLOY_PORT can be omitted and defaults to 22.
+DEPLOY_HOST and DEPLOY_SSH_KEY are required for SSH.
 
 Push to main to deploy.
 

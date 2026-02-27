@@ -41,16 +41,47 @@ jobs:
           PHOTO_MAX_MB=${{ secrets.PHOTO_MAX_MB }}
           SWAGGER_URL=${{ secrets.SWAGGER_URL }}
           EOF
+      - name: validate secrets
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_SERVICE: ${{ secrets.DEPLOY_SERVICE }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -z "${DEPLOY_HOST:-}" ] && missing+=("DEPLOY_HOST")
+          [ -z "${DEPLOY_USER:-}" ] && missing+=("DEPLOY_USER")
+          [ -z "${DEPLOY_PATH:-}" ] && missing+=("DEPLOY_PATH")
+          [ -z "${DEPLOY_SERVICE:-}" ] && missing+=("DEPLOY_SERVICE")
+          [ -z "${DEPLOY_SSH_KEY:-}" ] && missing+=("DEPLOY_SSH_KEY")
+          [ -z "${DATABASE_URL:-}" ] && missing+=("DATABASE_URL")
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Missing required secrets: ${missing[*]}";
+            exit 1;
+          fi
 
       - name: add ssh key
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          if [ -z "${DEPLOY_SSH_KEY:-}" ]; then
+            echo "DEPLOY_SSH_KEY is empty"; exit 1;
+          fi
+          printf "%s\n" "${DEPLOY_SSH_KEY}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          PORT="${{ secrets.DEPLOY_PORT }}"
+          PORT="${DEPLOY_PORT}"
           if [ -z "$PORT" ]; then PORT=22; fi
-          ssh-keyscan -p "$PORT" -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          if [ -z "${DEPLOY_HOST:-}" ]; then
+            echo "DEPLOY_HOST is empty"; exit 1;
+          fi
+          ssh-keyscan -p "$PORT" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
       - name: deploy
         env:
