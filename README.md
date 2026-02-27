@@ -48,6 +48,8 @@ PUBLIC_BASE_URL="https://api.example.com"
 PHOTO_MAX_MB=5
 ```
 
+Prisma config uses ESM at prisma.config.mjs.
+
 ## Compile and run the project
 
 ```bash
