@@ -8,7 +8,7 @@ if [[ -z "${DEPLOY_SERVICE:-}" ]]; then echo "Missing DEPLOY_SERVICE"; exit 1; f
 
 DEPLOY_PORT="${DEPLOY_PORT:-22}"
 
-rsync -az --delete -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" dist/ uploads/ package.json pnpm-lock.yaml prisma/ prisma.config.mjs .env "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+rsync -az --delete -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" dist/ uploads/ package.json pnpm-lock.yaml prisma/ prisma.config.mjs .env deploy/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
 
 ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "
   set -euo pipefail
@@ -33,6 +33,11 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
   ls -la || true
   echo \"[deploy] List prisma:\"
   ls -la prisma || true
+  if [ ! -f prisma/schema.prisma ] && [ -f schema.prisma ]; then
+    echo \"[deploy] Detected misplaced schema.prisma at project root. Moving into prisma/...\"
+    mkdir -p prisma
+    mv -f schema.prisma prisma/schema.prisma
+  fi
   if [ ! -f prisma/schema.prisma ]; then
     echo \"[deploy] ERROR: prisma/schema.prisma not found in \$(pwd)\"
     exit 1
