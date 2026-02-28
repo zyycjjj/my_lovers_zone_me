@@ -9,7 +9,7 @@ if [[ -z "${DEPLOY_SERVICE:-}" ]]; then echo "Missing DEPLOY_SERVICE"; exit 1; f
 DEPLOY_PORT="${DEPLOY_PORT:-22}"
 SKIP_SYSTEMCTL="${SKIP_SYSTEMCTL:-}"
 
-# 注意：dist 不要带尾部斜杠，否则只会同步内容，导致远端缺少 dist 目录
+# 预创建目录，避免 rsync 到根路径时报错
 ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "
   mkdir -p '${DEPLOY_PATH}' 2>/dev/null || true
   if [ ! -d '${DEPLOY_PATH}' ]; then
@@ -21,7 +21,16 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
     fi
   fi
 "
-rsync -az --delete -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" dist uploads/ package.json pnpm-lock.yaml prisma/ prisma.config.mjs .env deploy/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
+# 分目录同步，避免对根目录 --delete 导致误删 node_modules 等
+# 1) dist 全量覆盖
+rsync -az --delete    -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" dist/  "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/"
+# 2) prisma 代码与迁移脚本（删除过期迁移）
+rsync -az --delete    -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" prisma/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/prisma/"
+# 3) uploads 不删除（保留历史文件）
+rsync -az             -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" uploads/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/uploads/"
+# 4) 其他文件
+rsync -az             -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" package.json pnpm-lock.yaml prisma.config.mjs .env "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+rsync -az             -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" deploy/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/deploy/"
 
 ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "DEPLOY_PATH='${DEPLOY_PATH}' DEPLOY_SERVICE='${DEPLOY_SERVICE}' bash -s" <<'REMOTE'
 set -euo pipefail
