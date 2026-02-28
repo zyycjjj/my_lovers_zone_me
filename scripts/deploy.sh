@@ -20,17 +20,40 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
       exit 1
     fi
   fi
+  # 确保已有目录可写（历史上可能被 root 拥有）
+  if [ ! -w '${DEPLOY_PATH}' ]; then
+    if sudo -n true 2>/dev/null; then
+      sudo -n chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}'
+    else
+      echo 'DEPLOY_PATH_NOT_WRITABLE_AND_NO_SUDO'
+      exit 1
+    fi
+  fi
+  mkdir -p '${DEPLOY_PATH}/dist' '${DEPLOY_PATH}/prisma' '${DEPLOY_PATH}/uploads' '${DEPLOY_PATH}/deploy' 2>/dev/null || true
+  if sudo -n true 2>/dev/null; then
+    sudo -n chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}/dist' '${DEPLOY_PATH}/prisma' '${DEPLOY_PATH}/uploads' '${DEPLOY_PATH}/deploy' || true
+  fi
 "
 # 分目录同步，避免对根目录 --delete 导致误删 node_modules 等
 # 1) dist 全量覆盖
-rsync -az --delete    -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" dist/  "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/"
+rsync -az --delete --no-perms --no-owner --no-group \
+  -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" \
+  dist/  "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/"
 # 2) prisma 代码与迁移脚本（删除过期迁移）
-rsync -az --delete    -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" prisma/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/prisma/"
+rsync -az --delete --no-perms --no-owner --no-group \
+  -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" \
+  prisma/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/prisma/"
 # 3) uploads 不删除（保留历史文件）
-rsync -az             -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" uploads/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/uploads/"
+rsync -az --no-perms --no-owner --no-group \
+  -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" \
+  uploads/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/uploads/"
 # 4) 其他文件
-rsync -az             -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" package.json pnpm-lock.yaml prisma.config.mjs .env "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
-rsync -az             -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" deploy/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/deploy/"
+rsync -az --no-perms --no-owner --no-group \
+  -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" \
+  package.json pnpm-lock.yaml prisma.config.mjs .env "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+rsync -az --no-perms --no-owner --no-group \
+  -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" \
+  deploy/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/deploy/"
 
 ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "DEPLOY_PATH='${DEPLOY_PATH}' DEPLOY_SERVICE='${DEPLOY_SERVICE}' bash -s" <<'REMOTE'
 set -euo pipefail
