@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { getDateKey } from '../common/date';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -40,5 +41,56 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
+  }
+
+  async users(limit = 50) {
+    return this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  async events(limit = 100) {
+    return this.prisma.event.findMany({
+      orderBy: { updatedAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  async seedUsers(payload: {
+    meName?: string;
+    girlfriendName?: string;
+    testName?: string;
+  }) {
+    const toToken = (role: string) =>
+      `love_${role}_${randomBytes(6).toString('hex')}`;
+
+    const ensureRole = async (
+      role: 'me' | 'girlfriend' | 'test',
+      name: string,
+    ) => {
+      const existing = await this.prisma.user.findFirst({ where: { role } });
+      if (existing) {
+        return this.prisma.user.update({
+          where: { id: existing.id },
+          data: { name },
+        });
+      }
+      return this.prisma.user.create({
+        data: {
+          token: toToken(role),
+          role,
+          name,
+        },
+      });
+    };
+
+    const [me, girlfriend, test] = await Promise.all([
+      ensureRole('me', payload.meName ?? '我'),
+      ensureRole('girlfriend', payload.girlfriendName ?? '她'),
+      ensureRole('test', payload.testName ?? '测试'),
+    ]);
+
+    return { me, girlfriend, test };
   }
 }

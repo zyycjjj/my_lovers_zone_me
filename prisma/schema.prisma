@@ -6,6 +6,13 @@ datasource db {
   provider = "mysql"
 }
 
+enum UserRole {
+  me
+  girlfriend
+  test
+  user
+}
+
 enum EventType {
   tool_used
   signal_sent
@@ -15,12 +22,16 @@ enum EventType {
 model User {
   id        Int      @id @default(autoincrement())
   token     String   @unique @db.VarChar(128)
+  role      UserRole?
+  name      String?  @db.VarChar(64)
   createdAt DateTime @default(now())
 
   signals Signal[]
   events  Event[]
   echoes  Echo[]
   photos  Photo[]
+
+  @@index([role])
 }
 
 model Signal {
