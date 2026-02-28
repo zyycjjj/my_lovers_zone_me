@@ -105,6 +105,7 @@ if [ -n "${SKIP_SYSTEMCTL}" ]; then
   echo "[deploy] Skipping systemctl due to SKIP_SYSTEMCTL"
   exit 0
 fi
+echo "[deploy] user: $(whoami)"
 if sudo -n true 2>/dev/null; then
   SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
   SOURCE_FILE="${DEPLOY_PATH}/deploy/${SERVICE_NAME}.service"
