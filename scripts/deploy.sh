@@ -55,7 +55,7 @@ rsync -az --no-perms --no-owner --no-group \
   -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" \
   deploy/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/deploy/"
 
-ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "DEPLOY_PATH='${DEPLOY_PATH}' DEPLOY_SERVICE='${DEPLOY_SERVICE}' bash -s" <<'REMOTE'
+ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "DEPLOY_PATH='${DEPLOY_PATH}' DEPLOY_SERVICE='${DEPLOY_SERVICE}' SKIP_SYSTEMCTL='${SKIP_SYSTEMCTL}' bash -s" <<'REMOTE'
 set -euo pipefail
 export PNPM_HOME="${HOME}/.local/share/pnpm"
 export PATH="${PNPM_HOME}:${PATH}"
