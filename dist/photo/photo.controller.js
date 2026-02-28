@@ -52,7 +52,7 @@ let PhotoController = class PhotoController {
 exports.PhotoController = PhotoController;
 __decorate([
     (0, common_1.Post)(),
-    (0, swagger_1.ApiOperation)({ summary: '上传轻信号照片' }),
+    (0, swagger_1.ApiOperation)({ summary: '上传1轻信号照片' }),
     (0, swagger_1.ApiConsumes)('multipart/form-data'),
     (0, swagger_1.ApiBody)({
         schema: {

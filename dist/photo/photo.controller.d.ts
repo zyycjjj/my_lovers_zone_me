@@ -5,17 +5,17 @@ export declare class PhotoController {
     private readonly photos;
     constructor(photos: PhotoService);
     upload(req: Request, file: Express.Multer.File, body: PhotoDto): Promise<{
-        id: number;
-        createdAt: Date;
-        userId: number;
         url: string;
+        createdAt: Date;
+        id: number;
+        userId: number;
         signalId: number | null;
     }>;
     latest(req: Request): Promise<{
-        id: number;
-        createdAt: Date;
-        userId: number;
         url: string;
+        createdAt: Date;
+        id: number;
+        userId: number;
         signalId: number | null;
     }[]>;
 }

@@ -46,7 +46,7 @@ export class PhotoController {
   constructor(private readonly photos: PhotoService) {}
 
   @Post()
-  @ApiOperation({ summary: '上传轻信号照片' })
+  @ApiOperation({ summary: '上传1轻信号照片' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
