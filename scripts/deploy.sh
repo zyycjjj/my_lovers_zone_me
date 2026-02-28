@@ -7,9 +7,20 @@ if [[ -z "${DEPLOY_PATH:-}" ]]; then echo "Missing DEPLOY_PATH"; exit 1; fi
 if [[ -z "${DEPLOY_SERVICE:-}" ]]; then echo "Missing DEPLOY_SERVICE"; exit 1; fi
 
 DEPLOY_PORT="${DEPLOY_PORT:-22}"
+SKIP_SYSTEMCTL="${SKIP_SYSTEMCTL:-}"
 
 # 注意：dist 不要带尾部斜杠，否则只会同步内容，导致远端缺少 dist 目录
-ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "sudo -n mkdir -p '${DEPLOY_PATH}' && sudo -n chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}'"
+ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "
+  mkdir -p '${DEPLOY_PATH}' 2>/dev/null || true
+  if [ ! -d '${DEPLOY_PATH}' ]; then
+    if sudo -n true 2>/dev/null; then
+      sudo -n mkdir -p '${DEPLOY_PATH}' && sudo -n chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}'
+    else
+      echo 'SUDO_REQUIRED_FOR_DEPLOY_PATH'
+      exit 1
+    fi
+  fi
+"
 rsync -az --delete -e "ssh -p ${DEPLOY_PORT} -o StrictHostKeyChecking=no" dist uploads/ package.json pnpm-lock.yaml prisma/ prisma.config.mjs .env deploy/ "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}"
 
 ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "DEPLOY_PATH='${DEPLOY_PATH}' DEPLOY_SERVICE='${DEPLOY_SERVICE}' bash -s" <<'REMOTE'
@@ -58,28 +69,37 @@ if [ -z "${SERVICE_NAME}" ]; then
   echo "[deploy] ERROR: service name is empty (DEPLOY_SERVICE not set and no deploy/*.service found)"
   exit 1
 fi
-SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-SOURCE_FILE="${DEPLOY_PATH}/deploy/${SERVICE_NAME}.service"
-if [ ! -f "${SOURCE_FILE}" ]; then
-  ALT_SOURCE="${DEPLOY_PATH}/${SERVICE_NAME}.service"
-  if [ -f "${ALT_SOURCE}" ]; then
-    echo "[deploy] Fallback service file found at project root: ${ALT_SOURCE}"
-    SOURCE_FILE="${ALT_SOURCE}"
-  fi
+if [ -n "${SKIP_SYSTEMCTL}" ]; then
+  echo "[deploy] Skipping systemctl due to SKIP_SYSTEMCTL"
+  exit 0
 fi
-if [ ! -f "${SERVICE_FILE}" ]; then
-  if [ -f "${SOURCE_FILE}" ]; then
-    echo "[deploy] Installing systemd unit: ${SERVICE_FILE}"
-    sudo -n cp "${SOURCE_FILE}" "${SERVICE_FILE}"
-    sudo -n /usr/bin/systemctl daemon-reload
-    sudo -n /usr/bin/systemctl enable "${SERVICE_NAME}"
+if sudo -n true 2>/dev/null; then
+  SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
+  SOURCE_FILE="${DEPLOY_PATH}/deploy/${SERVICE_NAME}.service"
+  if [ ! -f "${SOURCE_FILE}" ]; then
+    ALT_SOURCE="${DEPLOY_PATH}/${SERVICE_NAME}.service"
+    if [ -f "${ALT_SOURCE}" ]; then
+      echo "[deploy] Fallback service file found at project root: ${ALT_SOURCE}"
+      SOURCE_FILE="${ALT_SOURCE}"
+    fi
+  fi
+  if [ ! -f "${SERVICE_FILE}" ]; then
+    if [ -f "${SOURCE_FILE}" ]; then
+      echo "[deploy] Installing systemd unit: ${SERVICE_FILE}"
+      sudo -n cp "${SOURCE_FILE}" "${SERVICE_FILE}"
+      sudo -n /usr/bin/systemctl daemon-reload
+      sudo -n /usr/bin/systemctl enable "${SERVICE_NAME}"
+    else
+      echo "[deploy] ERROR: source unit not found at ${SOURCE_FILE}"
+      exit 1
+    fi
   else
-    echo "[deploy] ERROR: source unit not found at ${SOURCE_FILE}"
-    exit 1
+    echo "[deploy] Unit already exists: ${SERVICE_FILE}"
+    sudo -n /usr/bin/systemctl daemon-reload
   fi
+  sudo -n /usr/bin/systemctl restart "${SERVICE_NAME}"
 else
-  echo "[deploy] Unit already exists: ${SERVICE_FILE}"
-  sudo -n /usr/bin/systemctl daemon-reload
+  echo "[deploy] ERROR: sudo requires password on target host"
+  exit 1
 fi
-sudo -n /usr/bin/systemctl restart "${SERVICE_NAME}"
 REMOTE
