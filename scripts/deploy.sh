@@ -13,8 +13,8 @@ SKIP_SYSTEMCTL="${SKIP_SYSTEMCTL:-}"
 ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOST}" "
   mkdir -p '${DEPLOY_PATH}' 2>/dev/null || true
   if [ ! -d '${DEPLOY_PATH}' ]; then
-    if sudo -n true 2>/dev/null; then
-      sudo -n mkdir -p '${DEPLOY_PATH}' && sudo -n chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}'
+    if sudo -n /bin/mkdir -p '${DEPLOY_PATH}' 2>/dev/null || sudo -n /usr/bin/mkdir -p '${DEPLOY_PATH}' 2>/dev/null; then
+      sudo -n /bin/chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}' 2>/dev/null || sudo -n /usr/bin/chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}'
     else
       echo 'SUDO_REQUIRED_FOR_DEPLOY_PATH'
       exit 1
@@ -22,17 +22,15 @@ ssh -o StrictHostKeyChecking=no -p "${DEPLOY_PORT}" "${DEPLOY_USER}@${DEPLOY_HOS
   fi
   # 确保已有目录可写（历史上可能被 root 拥有）
   if [ ! -w '${DEPLOY_PATH}' ]; then
-    if sudo -n true 2>/dev/null; then
-      sudo -n chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}'
+    if sudo -n /bin/chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}' 2>/dev/null || sudo -n /usr/bin/chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}' 2>/dev/null; then
+      :
     else
       echo 'DEPLOY_PATH_NOT_WRITABLE_AND_NO_SUDO'
       exit 1
     fi
   fi
   mkdir -p '${DEPLOY_PATH}/dist' '${DEPLOY_PATH}/prisma' '${DEPLOY_PATH}/uploads' '${DEPLOY_PATH}/deploy' 2>/dev/null || true
-  if sudo -n true 2>/dev/null; then
-    sudo -n chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}/dist' '${DEPLOY_PATH}/prisma' '${DEPLOY_PATH}/uploads' '${DEPLOY_PATH}/deploy' || true
-  fi
+  sudo -n /bin/chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}/dist' '${DEPLOY_PATH}/prisma' '${DEPLOY_PATH}/uploads' '${DEPLOY_PATH}/deploy' 2>/dev/null || sudo -n /usr/bin/chown -R '${DEPLOY_USER}':'${DEPLOY_USER}' '${DEPLOY_PATH}/dist' '${DEPLOY_PATH}/prisma' '${DEPLOY_PATH}/uploads' '${DEPLOY_PATH}/deploy' 2>/dev/null || true
 "
 # 分目录同步，避免对根目录 --delete 导致误删 node_modules 等
 # 1) dist 全量覆盖
@@ -106,7 +104,7 @@ if [ -n "${SKIP_SYSTEMCTL}" ]; then
   exit 0
 fi
 echo "[deploy] user: $(whoami)"
-if sudo -n true 2>/dev/null; then
+if sudo -n /usr/bin/systemctl --version >/dev/null 2>&1 || sudo -n /bin/systemctl --version >/dev/null 2>&1; then
   SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
   SOURCE_FILE="${DEPLOY_PATH}/deploy/${SERVICE_NAME}.service"
   if [ ! -f "${SOURCE_FILE}" ]; then
