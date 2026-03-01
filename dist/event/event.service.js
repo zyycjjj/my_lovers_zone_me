@@ -99,8 +99,6 @@ let EventService = class EventService {
                 if (!recipients.length) {
                     recipients = await this.prisma.user.findMany({
                         where: { NOT: { id: userId } },
-                        orderBy: { createdAt: 'desc' },
-                        take: 3,
                         select: { id: true },
                     });
                 }
@@ -111,7 +109,11 @@ let EventService = class EventService {
                             text,
                         })),
                     });
+                    return;
                 }
+                await this.prisma.echo.create({
+                    data: { userId, text },
+                });
             }
         }
         catch (error) {
