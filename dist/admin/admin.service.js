@@ -65,18 +65,21 @@ let AdminService = class AdminService {
         });
     }
     async seedUsers(payload) {
-        const toToken = (role) => `love_${role}_${(0, crypto_1.randomBytes)(6).toString('hex')}`;
+        const toToken = () => (0, crypto_1.randomBytes)(12).toString('hex');
         const ensureRole = async (role, name) => {
             const existing = await this.prisma.user.findFirst({ where: { role } });
             if (existing) {
                 return this.prisma.user.update({
                     where: { id: existing.id },
-                    data: { name },
+                    data: {
+                        name,
+                        token: toToken(),
+                    },
                 });
             }
             return this.prisma.user.create({
                 data: {
-                    token: toToken(role),
+                    token: toToken(),
                     role,
                     name,
                 },

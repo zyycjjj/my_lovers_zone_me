@@ -41,6 +41,15 @@ let EchoService = class EchoService {
             take: 5,
         });
     }
+    async profile(userId) {
+        return this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                role: true,
+                name: true,
+            },
+        });
+    }
 };
 exports.EchoService = EchoService;
 exports.EchoService = EchoService = __decorate([

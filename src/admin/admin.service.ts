@@ -62,8 +62,7 @@ export class AdminService {
     girlfriendName?: string;
     testName?: string;
   }) {
-    const toToken = (role: string) =>
-      `love_${role}_${randomBytes(6).toString('hex')}`;
+    const toToken = () => randomBytes(12).toString('hex');
 
     const ensureRole = async (
       role: 'me' | 'girlfriend' | 'test',
@@ -73,12 +72,15 @@ export class AdminService {
       if (existing) {
         return this.prisma.user.update({
           where: { id: existing.id },
-          data: { name },
+          data: {
+            name,
+            token: toToken(),
+          },
         });
       }
       return this.prisma.user.create({
         data: {
-          token: toToken(role),
+          token: toToken(),
           role,
           name,
         },

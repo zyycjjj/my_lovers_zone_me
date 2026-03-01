@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { AiService } from '../ai/ai.service';
 import { getDateKey } from '../common/date';
 import { EventService } from '../event/event.service';
@@ -88,7 +88,39 @@ export class ToolService {
       .filter(Boolean)
       .join('\n');
 
-    const text = await this.ai.chatText({ user: prompt });
+    let text = '';
+    try {
+      text = await this.ai.chatText({ user: prompt });
+    } catch (error) {
+      if (error instanceof ServiceUnavailableException) {
+        text = [
+          `【3秒开场钩子】`,
+          `这款${input.keyword}真的太适合${input.audience || '你'}了！`,
+          ``,
+          `【30s脚本】`,
+          `先看颜值，再看细节。${input.keyword}上手就很舒服，${
+            input.scene ? `在${input.scene}使用更顺手。` : '日常用也很实用。'
+          }`,
+          input.price != null ? `价格 ${input.price}，性价比很稳。` : '',
+          `现在入手刚好，别等没货再后悔。`,
+          ``,
+          `【分镜建议】`,
+          `1. 开箱特写`,
+          `2. 细节展示`,
+          `3. 使用场景`,
+          `4. 对比亮点`,
+          `5. 价格与福利`,
+          `6. 下单引导`,
+          ``,
+          `【评论区引导】`,
+          `想要的扣1，我把链接放评论区。`,
+        ]
+          .filter(Boolean)
+          .join('\n');
+      } else {
+        throw error;
+      }
+    }
     await this.events.incrementToolUsed(userId, 'script', getDateKey());
     return { text };
   }
@@ -107,7 +139,29 @@ export class ToolService {
       .filter(Boolean)
       .join('\n');
 
-    const raw = await this.ai.chatText({ user: prompt });
+    let raw = '';
+    try {
+      raw = await this.ai.chatText({ user: prompt });
+    } catch (error) {
+      if (error instanceof ServiceUnavailableException) {
+        const base = input.keyword.trim() || '好物';
+        const titles = [
+          `${base}真的绝了，开箱就爱上`,
+          `${base}的隐藏用法，越用越香`,
+          `${base}上手体验：这次没踩雷`,
+          `${base}值不值？我给你答案`,
+          `${base}适合谁？看完就懂`,
+          `${base}的细节太加分了`,
+          `${base}性价比拉满的选择`,
+          `${base}体验感拉满的一天`,
+          `想要${base}的看这里`,
+          `${base}真实测评，别盲买`,
+        ];
+        await this.events.incrementToolUsed(userId, 'title', getDateKey());
+        return { titles };
+      }
+      throw error;
+    }
     const parsed = tryParseJson<string[]>(extractJson(raw));
     const titles = Array.isArray(parsed)
       ? parsed
@@ -138,7 +192,33 @@ export class ToolService {
       `输入话术：${input.text}`,
     ].join('\n');
 
-    const raw = await this.ai.chatText({ user: prompt });
+    let raw = '';
+    try {
+      raw = await this.ai.chatText({ user: prompt });
+    } catch (error) {
+      if (error instanceof ServiceUnavailableException) {
+        const summaryLine = input.text.slice(0, 30);
+        await this.events.incrementToolUsed(userId, 'refine', getDateKey());
+        return {
+          summaryLine,
+          sellingPoints: input.text
+            ? [input.text.slice(0, 12), input.text.slice(12, 24)]
+                .map((item) => item.trim())
+                .filter(Boolean)
+            : [],
+          risks,
+          suggestions: risks.length
+            ? ['适当弱化承诺用语', '避免绝对化表述']
+            : ['保持描述真实可信', '突出具体体验点'],
+          safeRewrites: [
+            '体验感很好，值得一试',
+            '表现稳定，适合日常使用',
+            '用起来更安心',
+          ],
+        };
+      }
+      throw error;
+    }
     const parsed = tryParseJson<{
       summaryLine?: string;
       sellingPoints?: unknown;

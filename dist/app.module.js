@@ -22,9 +22,17 @@ const tool_module_1 = require("./tool/tool.module");
 const echo_module_1 = require("./echo/echo.module");
 const admin_module_1 = require("./admin/admin.module");
 const app_controller_1 = require("./app.controller");
+const requestLogger = (req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
+    });
+    next();
+};
 let AppModule = class AppModule {
     configure(consumer) {
-        consumer.apply(user_token_middleware_1.UserTokenMiddleware).forRoutes('*');
+        consumer.apply(requestLogger, user_token_middleware_1.UserTokenMiddleware).forRoutes('*');
     }
 };
 exports.AppModule = AppModule;

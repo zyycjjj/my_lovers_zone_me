@@ -15,6 +15,7 @@ const class_validator_1 = require("class-validator");
 class EventDto {
     type;
     key;
+    targetToken;
 }
 exports.EventDto = EventDto;
 __decorate([
@@ -29,4 +30,11 @@ __decorate([
     (0, class_validator_1.MaxLength)(64),
     __metadata("design:type", String)
 ], EventDto.prototype, "key", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'user-token' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(128),
+    __metadata("design:type", String)
+], EventDto.prototype, "targetToken", void 0);
 //# sourceMappingURL=event.dto.js.map

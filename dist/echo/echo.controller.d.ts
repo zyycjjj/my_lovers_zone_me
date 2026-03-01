@@ -16,4 +16,8 @@ export declare class EchoController {
         userId: number;
         text: string;
     }[]>;
+    profile(req: Request): Promise<{
+        role: import("@prisma/client").$Enums.UserRole | null;
+        name: string | null;
+    } | null>;
 }

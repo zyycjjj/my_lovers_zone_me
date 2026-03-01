@@ -6,14 +6,14 @@ export declare class PhotoService {
         id: number;
         createdAt: Date;
         userId: number;
-        url: string;
         signalId: number | null;
+        url: string;
     }>;
     latest(userId: number, take?: number): Promise<{
         id: number;
         createdAt: Date;
         userId: number;
-        url: string;
         signalId: number | null;
+        url: string;
     }[]>;
 }

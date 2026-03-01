@@ -21,4 +21,8 @@ export declare class EchoService {
         userId: number;
         text: string;
     }[]>;
+    profile(userId: number): Promise<{
+        role: import("@prisma/client").$Enums.UserRole | null;
+        name: string | null;
+    } | null>;
 }

@@ -11,4 +11,10 @@ export class EventDto {
   @IsString()
   @MaxLength(64)
   key?: string;
+
+  @ApiPropertyOptional({ example: 'user-token' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  targetToken?: string;
 }

@@ -30,7 +30,7 @@ let EventController = class EventController {
             throw new common_1.BadRequestException('Missing key');
         }
         const date = (0, date_1.getDateKey)();
-        await this.events.recordEvent(req.userId, body.type, body.key ?? '', date);
+        await this.events.recordEvent(req.userId, body.type, body.key ?? '', date, body.targetToken);
         if (body.type === 'button_used') {
             this.events.emitActivity({
                 type: 'button_used',

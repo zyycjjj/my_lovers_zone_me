@@ -1,4 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -13,6 +14,17 @@ import { ToolModule } from './tool/tool.module';
 import { EchoModule } from './echo/echo.module';
 import { AdminModule } from './admin/admin.module';
 import { AppController } from './app.controller';
+
+const requestLogger = (req: Request, res: Response, next: () => void) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(
+      `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`,
+    );
+  });
+  next();
+};
 
 @Module({
   imports: [
@@ -35,6 +47,6 @@ import { AppController } from './app.controller';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(UserTokenMiddleware).forRoutes('*');
+    consumer.apply(requestLogger, UserTokenMiddleware).forRoutes('*');
   }
 }

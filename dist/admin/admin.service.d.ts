@@ -6,19 +6,19 @@ export declare class AdminService {
         date: string;
         events: {
             id: number;
-            userId: number;
+            createdAt: Date;
             type: import("@prisma/client").$Enums.EventType;
+            userId: number;
             toolKey: string;
             count: number;
             date: string;
-            createdAt: Date;
             updatedAt: Date;
         }[];
         latestSignal: {
             id: number;
+            createdAt: Date;
             userId: number;
             date: string;
-            createdAt: Date;
             updatedAt: Date;
             mood: string;
             status: string;
@@ -26,40 +26,40 @@ export declare class AdminService {
         } | null;
         echoes: {
             id: number;
-            userId: number;
             createdAt: Date;
+            userId: number;
             text: string;
         }[];
         photos: {
             id: number;
-            userId: number;
             createdAt: Date;
+            userId: number;
             signalId: number | null;
             url: string;
         }[];
     }>;
     photos(limit?: number): Promise<{
         id: number;
-        userId: number;
         createdAt: Date;
+        userId: number;
         signalId: number | null;
         url: string;
     }[]>;
     users(limit?: number): Promise<{
         id: number;
-        createdAt: Date;
-        name: string | null;
         token: string;
         role: import("@prisma/client").$Enums.UserRole | null;
+        name: string | null;
+        createdAt: Date;
     }[]>;
     events(limit?: number): Promise<{
         id: number;
-        userId: number;
+        createdAt: Date;
         type: import("@prisma/client").$Enums.EventType;
+        userId: number;
         toolKey: string;
         count: number;
         date: string;
-        createdAt: Date;
         updatedAt: Date;
     }[]>;
     seedUsers(payload: {
@@ -69,24 +69,24 @@ export declare class AdminService {
     }): Promise<{
         me: {
             id: number;
-            createdAt: Date;
-            name: string | null;
             token: string;
             role: import("@prisma/client").$Enums.UserRole | null;
+            name: string | null;
+            createdAt: Date;
         };
         girlfriend: {
             id: number;
-            createdAt: Date;
-            name: string | null;
             token: string;
             role: import("@prisma/client").$Enums.UserRole | null;
+            name: string | null;
+            createdAt: Date;
         };
         test: {
             id: number;
-            createdAt: Date;
-            name: string | null;
             token: string;
             role: import("@prisma/client").$Enums.UserRole | null;
+            name: string | null;
+            createdAt: Date;
         };
     }>;
 }

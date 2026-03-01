@@ -30,6 +30,9 @@ let EchoController = class EchoController {
     async latest(req) {
         return this.echoes.latest(req.userId);
     }
+    async profile(req) {
+        return this.echoes.profile(req.userId);
+    }
 };
 exports.EchoController = EchoController;
 __decorate([
@@ -52,6 +55,16 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EchoController.prototype, "latest", null);
+__decorate([
+    (0, common_1.Get)('profile'),
+    (0, swagger_1.ApiOperation)({ summary: '获取用户角色' }),
+    (0, swagger_1.ApiBearerAuth)('UserToken'),
+    (0, common_1.UseGuards)(user_guard_1.UserGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], EchoController.prototype, "profile", null);
 exports.EchoController = EchoController = __decorate([
     (0, swagger_1.ApiTags)('echo'),
     (0, common_1.Controller)('api/echo'),

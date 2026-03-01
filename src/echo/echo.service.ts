@@ -32,4 +32,14 @@ export class EchoService {
       take: 5,
     });
   }
+
+  async profile(userId: number) {
+    return this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        role: true,
+        name: true,
+      },
+    });
+  }
 }

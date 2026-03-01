@@ -26,4 +26,12 @@ export class EchoController {
   async latest(@Req() req: Request) {
     return this.echoes.latest(req.userId!);
   }
+
+  @Get('profile')
+  @ApiOperation({ summary: '获取用户角色' })
+  @ApiBearerAuth('UserToken')
+  @UseGuards(UserGuard)
+  async profile(@Req() req: Request) {
+    return this.echoes.profile(req.userId!);
+  }
 }
