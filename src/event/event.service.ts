@@ -36,7 +36,7 @@ export class EventService {
     type: 'tool_used' | 'signal_sent' | 'button_used',
     toolKey: string,
     date: string,
-    targetToken?: string,
+    _targetToken?: string,
   ) {
     const key = type === 'signal_sent' ? '' : toolKey;
     try {
@@ -63,57 +63,34 @@ export class EventService {
 
       if (type === 'button_used') {
         const parts = key.split('.');
-        const prefixRole = parts.length > 1 ? parts[0] : null;
         const action = parts.length > 1 ? parts[1] : key;
         const sender = await this.prisma.user.findUnique({
           where: { id: userId },
           select: { role: true },
         });
-        const senderRole = sender?.role ?? prefixRole;
+        const senderRole = sender?.role ?? (parts.length > 1 ? parts[0] : null);
         const text = loveKeyText[action];
         if (!text) return;
 
         let recipients: { id: number }[] = [];
-        if (targetToken) {
-          const recipient = await this.prisma.user.findUnique({
-            where: { token: targetToken },
+        if (senderRole === 'me' && _targetToken) {
+          const targetUser = await this.prisma.user.findUnique({
+            where: { token: _targetToken },
             select: { id: true },
           });
-          if (recipient) {
-            recipients = [recipient];
-          }
-        }
-
-        if (!recipients.length) {
-          const recipientRole =
-            senderRole === 'me'
-              ? 'girlfriend'
-              : senderRole === 'girlfriend'
-                ? 'me'
-                : null;
-          if (recipientRole) {
-            recipients = await this.prisma.user.findMany({
-              where: { role: recipientRole, NOT: { id: userId } },
-              select: { id: true },
-            });
+          if (targetUser) {
+            recipients = [targetUser];
           }
         }
 
         if (!recipients.length) {
           recipients = await this.prisma.user.findMany({
-            where: { role: { in: ['me', 'girlfriend'] }, NOT: { id: userId } },
+            where: { role: 'me' },
             select: { id: true },
           });
         }
 
-        if (!recipients.length) {
-          recipients = await this.prisma.user.findMany({
-            where: { NOT: { id: userId } },
-            select: { id: true },
-          });
-        }
-
-        if (recipients.length) {
+        if (recipients.length > 0) {
           await this.prisma.echo.createMany({
             data: recipients.map((recipient) => ({
               userId: recipient.id,
