@@ -14,6 +14,7 @@ const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class PhotoDto {
     signalId;
+    targetToken;
 }
 exports.PhotoDto = PhotoDto;
 __decorate([
@@ -22,4 +23,11 @@ __decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], PhotoDto.prototype, "signalId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'user-token' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(128),
+    __metadata("design:type", String)
+], PhotoDto.prototype, "targetToken", void 0);
 //# sourceMappingURL=photo.dto.js.map

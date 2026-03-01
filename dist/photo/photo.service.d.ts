@@ -9,6 +9,7 @@ export declare class PhotoService {
         signalId: number | null;
         url: string;
     }>;
+    createForUsers(userIds: number[], url: string, signalId?: number): Promise<import("@prisma/client").Prisma.BatchPayload>;
     latest(userId: number, take?: number): Promise<{
         id: number;
         createdAt: Date;

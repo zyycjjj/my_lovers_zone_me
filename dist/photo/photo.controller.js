@@ -21,6 +21,7 @@ const path_1 = require("path");
 const crypto_1 = require("crypto");
 const fs_1 = require("fs");
 const user_guard_1 = require("../auth/user.guard");
+const prisma_service_1 = require("../prisma/prisma.service");
 const photo_dto_1 = require("./dto/photo.dto");
 const photo_service_1 = require("./photo.service");
 function getUploadDir() {
@@ -36,14 +37,46 @@ function getPublicUrl(filename) {
 }
 let PhotoController = class PhotoController {
     photos;
-    constructor(photos) {
+    prisma;
+    constructor(photos, prisma) {
         this.photos = photos;
+        this.prisma = prisma;
     }
     async upload(req, file, body) {
         if (!file)
             throw new common_1.BadRequestException('Missing file or unsupported type');
         const url = getPublicUrl(file.filename);
-        return this.photos.create(req.userId, url, body.signalId);
+        const senderId = req.userId;
+        const recipientIds = new Set([senderId]);
+        if (body.targetToken) {
+            const recipient = await this.prisma.user.findUnique({
+                where: { token: body.targetToken },
+                select: { id: true },
+            });
+            if (recipient) {
+                recipientIds.add(recipient.id);
+            }
+        }
+        if (recipientIds.size === 1) {
+            const roleRecipients = await this.prisma.user.findMany({
+                where: {
+                    role: { in: ['me', 'girlfriend'] },
+                    NOT: { id: senderId },
+                },
+                select: { id: true },
+            });
+            if (roleRecipients.length) {
+                roleRecipients.forEach((item) => recipientIds.add(item.id));
+            }
+            else {
+                const others = await this.prisma.user.findMany({
+                    where: { NOT: { id: senderId } },
+                    select: { id: true },
+                });
+                others.forEach((item) => recipientIds.add(item.id));
+            }
+        }
+        return this.photos.createForUsers(Array.from(recipientIds), url, body.signalId);
     }
     async latest(req) {
         return this.photos.latest(req.userId);
@@ -60,6 +93,7 @@ __decorate([
             properties: {
                 file: { type: 'string', format: 'binary' },
                 signalId: { type: 'number' },
+                targetToken: { type: 'string' },
             },
             required: ['file'],
         },
@@ -106,6 +140,7 @@ exports.PhotoController = PhotoController = __decorate([
     (0, swagger_1.ApiBearerAuth)('UserToken'),
     (0, common_1.Controller)('api/photo'),
     (0, common_1.UseGuards)(user_guard_1.UserGuard),
-    __metadata("design:paramtypes", [photo_service_1.PhotoService])
+    __metadata("design:paramtypes", [photo_service_1.PhotoService,
+        prisma_service_1.PrismaService])
 ], PhotoController);
 //# sourceMappingURL=photo.controller.js.map

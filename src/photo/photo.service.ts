@@ -15,6 +15,17 @@ export class PhotoService {
     });
   }
 
+  async createForUsers(userIds: number[], url: string, signalId?: number) {
+    if (!userIds.length) return { count: 0 };
+    return this.prisma.photo.createMany({
+      data: userIds.map((userId) => ({
+        userId,
+        url,
+        signalId: signalId ?? null,
+      })),
+    });
+  }
+
   async latest(userId: number, take = 20) {
     return this.prisma.photo.findMany({
       where: { userId },

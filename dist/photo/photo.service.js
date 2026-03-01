@@ -26,6 +26,17 @@ let PhotoService = class PhotoService {
             },
         });
     }
+    async createForUsers(userIds, url, signalId) {
+        if (!userIds.length)
+            return { count: 0 };
+        return this.prisma.photo.createMany({
+            data: userIds.map((userId) => ({
+                userId,
+                url,
+                signalId: signalId ?? null,
+            })),
+        });
+    }
     async latest(userId, take = 20) {
         return this.prisma.photo.findMany({
             where: { userId },

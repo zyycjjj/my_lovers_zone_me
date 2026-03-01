@@ -23,6 +23,7 @@ import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
 import { mkdirSync } from 'fs';
 import { UserGuard } from '../auth/user.guard';
+import { PrismaService } from '../prisma/prisma.service';
 import { PhotoDto } from './dto/photo.dto';
 import { PhotoService } from './photo.service';
 
@@ -43,7 +44,10 @@ function getPublicUrl(filename: string) {
 @Controller('api/photo')
 @UseGuards(UserGuard)
 export class PhotoController {
-  constructor(private readonly photos: PhotoService) {}
+  constructor(
+    private readonly photos: PhotoService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: '上传1轻信号照片' })
@@ -54,6 +58,7 @@ export class PhotoController {
       properties: {
         file: { type: 'string', format: 'binary' },
         signalId: { type: 'number' },
+        targetToken: { type: 'string' },
       },
       required: ['file'],
     },
@@ -102,7 +107,43 @@ export class PhotoController {
     if (!file)
       throw new BadRequestException('Missing file or unsupported type');
     const url = getPublicUrl(file.filename);
-    return this.photos.create(req.userId!, url, body.signalId);
+    const senderId = req.userId!;
+    const recipientIds = new Set<number>([senderId]);
+
+    if (body.targetToken) {
+      const recipient = await this.prisma.user.findUnique({
+        where: { token: body.targetToken },
+        select: { id: true },
+      });
+      if (recipient) {
+        recipientIds.add(recipient.id);
+      }
+    }
+
+    if (recipientIds.size === 1) {
+      const roleRecipients = await this.prisma.user.findMany({
+        where: {
+          role: { in: ['me', 'girlfriend'] },
+          NOT: { id: senderId },
+        },
+        select: { id: true },
+      });
+      if (roleRecipients.length) {
+        roleRecipients.forEach((item) => recipientIds.add(item.id));
+      } else {
+        const others = await this.prisma.user.findMany({
+          where: { NOT: { id: senderId } },
+          select: { id: true },
+        });
+        others.forEach((item) => recipientIds.add(item.id));
+      }
+    }
+
+    return this.photos.createForUsers(
+      Array.from(recipientIds),
+      url,
+      body.signalId,
+    );
   }
 
   @Get('latest')
