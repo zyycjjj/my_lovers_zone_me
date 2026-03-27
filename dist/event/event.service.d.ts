@@ -11,7 +11,7 @@ export declare class EventService {
     constructor(prisma: PrismaService);
     emitActivity(event: ActivityEvent): void;
     activityStream(): import("rxjs").Observable<ActivityEvent>;
-    recordEvent(userId: number, type: 'tool_used' | 'signal_sent' | 'button_used', toolKey: string, date: string, targetToken?: string): Promise<void>;
+    recordEvent(userId: number, type: 'tool_used' | 'signal_sent' | 'button_used', toolKey: string, date: string, _targetToken?: string): Promise<void>;
     incrementToolUsed(userId: number, toolKey: string, date: string): Promise<void>;
     incrementSignalSent(userId: number, date: string): Promise<void>;
 }
