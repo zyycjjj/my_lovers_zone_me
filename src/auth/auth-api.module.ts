@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AliyunNumberAuthClient } from './domain/aliyun-number-auth.client';
 import { AuthDomain } from './auth.domain';
+import { UserProfileRepository } from '../onboarding/repositories/user-profile.repository';
+import { WorkspaceMemberRepository } from '../workspace/repositories/workspace-member.repository';
+import { WorkspaceRepository } from '../workspace/repositories/workspace.repository';
 import { AccountRepository } from './repositories/account.repository';
 import { AuthIdentityRepository } from './repositories/auth-identity.repository';
 import { AuthSessionRepository } from './repositories/auth-session.repository';
@@ -18,6 +21,9 @@ import { AuthService } from './auth.service';
     AuthIdentityRepository,
     AuthSessionRepository,
     SessionAccountRepository,
+    WorkspaceRepository,
+    WorkspaceMemberRepository,
+    UserProfileRepository,
   ],
   exports: [
     AuthService,
@@ -27,6 +33,9 @@ import { AuthService } from './auth.service';
     AuthIdentityRepository,
     AuthSessionRepository,
     SessionAccountRepository,
+    WorkspaceRepository,
+    WorkspaceMemberRepository,
+    UserProfileRepository,
   ],
 })
 export class AuthApiModule {}
