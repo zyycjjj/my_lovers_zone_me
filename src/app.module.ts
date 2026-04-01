@@ -5,14 +5,17 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
+import { AuthApiModule } from './auth/auth-api.module';
 import { UserTokenMiddleware } from './auth/user-token.middleware';
 import { EventModule } from './event/event.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
 import { PhotoModule } from './photo/photo.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SignalModule } from './signal/signal.module';
 import { ToolModule } from './tool/tool.module';
 import { EchoModule } from './echo/echo.module';
 import { AdminModule } from './admin/admin.module';
+import { WorkspaceModule } from './workspace/workspace.module';
 import { AppController } from './app.controller';
 
 const requestLogger = (req: Request, res: Response, next: () => void) => {
@@ -35,6 +38,7 @@ const requestLogger = (req: Request, res: Response, next: () => void) => {
     }),
     PrismaModule,
     AuthModule,
+    AuthApiModule,
     AiModule,
     EventModule,
     ToolModule,
@@ -42,6 +46,8 @@ const requestLogger = (req: Request, res: Response, next: () => void) => {
     EchoModule,
     PhotoModule,
     AdminModule,
+    OnboardingModule,
+    WorkspaceModule,
   ],
   controllers: [AppController],
 })

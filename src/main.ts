@@ -20,6 +20,10 @@ async function bootstrap() {
     .setDescription('My Lovers Zone backend API')
     .setVersion('1.0.0')
     .addApiKey(
+      { type: 'apiKey', in: 'header', name: 'x-session-token' },
+      'SessionToken',
+    )
+    .addApiKey(
       { type: 'apiKey', in: 'header', name: 'x-user-token' },
       'UserToken',
     )
