@@ -8,6 +8,10 @@ import { RefreshSessionDto } from '../dto/refresh-session.dto';
 export class AuthService {
   constructor(private readonly domain: AuthDomain) {}
 
+  getNumberAuthToken() {
+    return this.domain.getNumberAuthToken();
+  }
+
   numberLogin(payload: NumberLoginDto) {
     return this.domain.numberLogin(payload);
   }

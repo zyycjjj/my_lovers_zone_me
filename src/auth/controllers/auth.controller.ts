@@ -11,6 +11,7 @@ import { SessionAuthGuard } from '../session-auth.guard';
 import { AuthService } from '../services/auth.service';
 import { AuthMeDto } from '../dto/auth-me.dto';
 import { LogoutDto } from '../dto/logout.dto';
+import { NumberAuthTokenDto } from '../dto/number-auth-token.dto';
 import { NumberLoginDto } from '../dto/number-login.dto';
 import { NumberLoginResponseDto } from '../dto/number-login-response.dto';
 import { RefreshSessionDto } from '../dto/refresh-session.dto';
@@ -21,6 +22,13 @@ import { SessionDto } from '../dto/session.dto';
 @Controller('api/auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
+
+  @Get('number-auth-token')
+  @ApiOperation({ summary: '获取号码认证鉴权 token' })
+  @ApiOkResponse({ type: NumberAuthTokenDto })
+  async getNumberAuthToken() {
+    return this.auth.getNumberAuthToken();
+  }
 
   @Post('number-login')
   @ApiOperation({ summary: '号码认证登录' })
@@ -49,13 +57,11 @@ export class AuthController {
   }
 
   @Post('session/refresh')
-  @UseGuards(SessionAuthGuard)
   @ApiOperation({ summary: '刷新会话' })
-  @ApiBearerAuth('SessionToken')
   @ApiBody({ type: RefreshSessionDto })
   @ApiOkResponse({ type: SessionDto })
   async refresh(@Req() req: Request, @Body() body: RefreshSessionDto) {
-    return this.auth.refresh(req.sessionToken!, body);
+    return this.auth.refresh(req.sessionToken ?? '', body);
   }
 
   @Post('logout')
