@@ -7,11 +7,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { SessionAuthGuard } from '../../auth/session-auth.guard';
-import { OnboardingService } from '../services/onboarding.service';
-import { OnboardingStatusDto } from '../dto/onboarding-status.dto';
-import { UpsertOnboardingProfileDto } from '../dto/upsert-onboarding-profile.dto';
-import { UpsertOnboardingProfileResponseDto } from '../dto/upsert-onboarding-profile-response.dto';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { OnboardingService } from './onboarding.service';
+import { OnboardingStatusDto } from './dto/onboarding-status.dto';
+import { UpsertOnboardingProfileDto } from './dto/upsert-onboarding-profile.dto';
+import { UpsertOnboardingProfileResponseDto } from './dto/upsert-onboarding-profile-response.dto';
 
 @ApiTags('onboarding')
 @ApiBearerAuth('SessionToken')

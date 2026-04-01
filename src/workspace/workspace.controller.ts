@@ -6,10 +6,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { SessionAuthGuard } from '../../auth/session-auth.guard';
-import { WorkspaceListDto } from '../dto/workspace-list.dto';
-import { WorkspaceSummaryDto } from '../dto/workspace-summary.dto';
-import { WorkspaceService } from '../services/workspace.service';
+import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { WorkspaceListDto } from './dto/workspace-list.dto';
+import { WorkspaceSummaryDto } from './dto/workspace-summary.dto';
+import { WorkspaceService } from './workspace.service';
 
 @ApiTags('workspace')
 @ApiBearerAuth('SessionToken')

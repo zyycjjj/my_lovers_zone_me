@@ -3,24 +3,25 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { PrismaService } from '../../prisma/prisma.service';
-import { NumberLoginDto } from '../dto/number-login.dto';
-import { RefreshSessionDto } from '../dto/refresh-session.dto';
-import { LogoutDto } from '../dto/logout.dto';
-import { AccountRepository } from '../repositories/account.repository';
-import { AuthIdentityRepository } from '../repositories/auth-identity.repository';
-import { AuthSessionRepository } from '../repositories/auth-session.repository';
-import { SessionAccountRepository } from '../repositories/session-account.repository';
-import { WorkspaceRepository } from '../../workspace/repositories/workspace.repository';
-import { WorkspaceMemberRepository } from '../../workspace/repositories/workspace-member.repository';
-import { UserProfileRepository } from '../../onboarding/repositories/user-profile.repository';
+import { PrismaService } from '../prisma/prisma.service';
+import { NumberLoginDto } from './dto/number-login.dto';
+import { RefreshSessionDto } from './dto/refresh-session.dto';
+import { LogoutDto } from './dto/logout.dto';
+import { AccountRepository } from './repositories/account.repository';
+import { AuthIdentityRepository } from './repositories/auth-identity.repository';
+import { AuthSessionRepository } from './repositories/auth-session.repository';
+import { SessionAccountRepository } from './repositories/session-account.repository';
+import { WorkspaceRepository } from '../workspace/repositories/workspace.repository';
+import { WorkspaceMemberRepository } from '../workspace/repositories/workspace-member.repository';
+import { UserProfileRepository } from '../onboarding/repositories/user-profile.repository';
+import { DbClient } from './repositories/repository.types';
 import {
   toAccountSummary,
   toRoutingResult,
   toSessionDto,
   toWorkspaceSummary,
-} from './auth-presenter';
-import { AliyunNumberAuthClient } from './aliyun-number-auth.client';
+} from './domain/auth-presenter';
+import { AliyunNumberAuthClient } from './domain/aliyun-number-auth.client';
 
 @Injectable()
 export class AuthDomain {
@@ -42,7 +43,7 @@ export class AuthDomain {
 
   async numberLogin(payload: NumberLoginDto) {
     const { phone } = await this.aliyun.getPhoneWithToken(payload.spToken);
-    const result = await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx: DbClient) => {
       let account = await this.accounts.findByPhone(phone, tx);
       if (!account) {
         account = await this.accounts.createByPhone(phone, tx);

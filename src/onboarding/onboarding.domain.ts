@@ -1,12 +1,13 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AccountRepository } from '../../auth/repositories/account.repository';
-import { AuthSessionRepository } from '../../auth/repositories/auth-session.repository';
-import { WorkspaceMemberRepository } from '../../workspace/repositories/workspace-member.repository';
-import { UpsertOnboardingProfileDto } from '../dto/upsert-onboarding-profile.dto';
-import { UserProfileRepository } from '../repositories/user-profile.repository';
-import { WorkspaceRepository } from '../../workspace/repositories/workspace.repository';
-import { PrismaService } from '../../prisma/prisma.service';
-import { toRoutingResult } from '../../auth/domain/auth-presenter';
+import { AccountRepository } from '../auth/repositories/account.repository';
+import { AuthSessionRepository } from '../auth/repositories/auth-session.repository';
+import { WorkspaceMemberRepository } from '../workspace/repositories/workspace-member.repository';
+import { UpsertOnboardingProfileDto } from './dto/upsert-onboarding-profile.dto';
+import { UserProfileRepository } from './repositories/user-profile.repository';
+import { WorkspaceRepository } from '../workspace/repositories/workspace.repository';
+import { PrismaService } from '../prisma/prisma.service';
+import { toRoutingResult } from '../auth/domain/auth-presenter';
+import { DbClient } from '../auth/repositories/repository.types';
 
 @Injectable()
 export class OnboardingDomain {
@@ -38,7 +39,7 @@ export class OnboardingDomain {
     const context = await this.requireContext(sessionToken);
     const completedAt = new Date();
 
-    const profile = await this.prisma.$transaction(async (tx) => {
+    const profile = await this.prisma.$transaction(async (tx: DbClient) => {
       const updatedAccount = await this.accounts.updateDisplayName(
         context.account.id,
         payload.nickname,

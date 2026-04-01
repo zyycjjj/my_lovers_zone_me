@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthSessionRepository } from '../../auth/repositories/auth-session.repository';
-import { WorkspaceMemberRepository } from '../repositories/workspace-member.repository';
-import { toWorkspaceSummary } from '../../auth/domain/auth-presenter';
+import { AuthSessionRepository } from '../auth/repositories/auth-session.repository';
+import { WorkspaceMemberRepository } from './repositories/workspace-member.repository';
+import { toWorkspaceSummary } from '../auth/domain/auth-presenter';
 
 @Injectable()
 export class WorkspaceDomain {

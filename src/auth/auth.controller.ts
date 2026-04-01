@@ -7,16 +7,16 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { SessionAuthGuard } from '../session-auth.guard';
-import { AuthService } from '../services/auth.service';
-import { AuthMeDto } from '../dto/auth-me.dto';
-import { LogoutDto } from '../dto/logout.dto';
-import { NumberAuthTokenDto } from '../dto/number-auth-token.dto';
-import { NumberLoginDto } from '../dto/number-login.dto';
-import { NumberLoginResponseDto } from '../dto/number-login-response.dto';
-import { RefreshSessionDto } from '../dto/refresh-session.dto';
-import { RoutingResultDto } from '../dto/routing-result.dto';
-import { SessionDto } from '../dto/session.dto';
+import { SessionAuthGuard } from './session-auth.guard';
+import { AuthService } from './auth.service';
+import { AuthMeDto } from './dto/auth-me.dto';
+import { LogoutDto } from './dto/logout.dto';
+import { NumberAuthTokenDto } from './dto/number-auth-token.dto';
+import { NumberLoginDto } from './dto/number-login.dto';
+import { NumberLoginResponseDto } from './dto/number-login-response.dto';
+import { RefreshSessionDto } from './dto/refresh-session.dto';
+import { RoutingResultDto } from './dto/routing-result.dto';
+import { SessionDto } from './dto/session.dto';
 
 @ApiTags('auth')
 @Controller('api/auth')

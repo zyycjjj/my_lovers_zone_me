@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { OnboardingDomain } from '../domain/onboarding.domain';
-import { UpsertOnboardingProfileDto } from '../dto/upsert-onboarding-profile.dto';
+import { OnboardingDomain } from './onboarding.domain';
+import { UpsertOnboardingProfileDto } from './dto/upsert-onboarding-profile.dto';
 
 @Injectable()
 export class OnboardingService {

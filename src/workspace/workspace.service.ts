@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { WorkspaceDomain } from '../domain/workspace.domain';
+import { WorkspaceDomain } from './workspace.domain';
 
 @Injectable()
 export class WorkspaceService {
