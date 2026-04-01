@@ -19,12 +19,148 @@ enum EventType {
   button_used
 }
 
+enum AccountStatus {
+  active
+  disabled
+}
+
+enum AuthProvider {
+  aliyun_number_auth
+  sms_code
+  wechat
+  email
+}
+
+enum WorkspaceType {
+  personal
+  team
+}
+
+enum WorkspaceStatus {
+  active
+  archived
+}
+
+enum WorkspaceMemberRole {
+  owner
+  admin
+  editor
+}
+
+enum WorkspaceMemberStatus {
+  active
+  invited
+  removed
+}
+
+model Account {
+  id              Int           @id @default(autoincrement())
+  phone           String?       @unique @db.VarChar(32)
+  phoneVerifiedAt DateTime?
+  displayName     String?       @db.VarChar(64)
+  avatarUrl       String?       @db.VarChar(512)
+  status          AccountStatus @default(active)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  identities       AuthIdentity[]
+  sessions         AuthSession[]
+  ownedWorkspaces  Workspace[]
+  workspaceMembers WorkspaceMember[]
+  profile          UserProfile?
+}
+
+model AuthIdentity {
+  id             Int          @id @default(autoincrement())
+  accountId      Int
+  provider       AuthProvider
+  providerUserId String?      @db.VarChar(128)
+  providerPhone  String?      @db.VarChar(32)
+  isPrimary      Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([accountId, provider])
+}
+
+model AuthSession {
+  id           Int      @id @default(autoincrement())
+  accountId    Int
+  sessionToken String   @unique @db.VarChar(128)
+  refreshToken String?  @unique @db.VarChar(128)
+  expiredAt    DateTime
+  lastActiveAt DateTime @default(now())
+  ip           String?  @db.VarChar(64)
+  userAgent    String?  @db.VarChar(512)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, expiredAt])
+}
+
+model Workspace {
+  id             Int             @id @default(autoincrement())
+  name           String          @db.VarChar(64)
+  type           WorkspaceType
+  ownerAccountId Int
+  status         WorkspaceStatus @default(active)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  owner    Account           @relation(fields: [ownerAccountId], references: [id], onDelete: Cascade)
+  members  WorkspaceMember[]
+  profiles UserProfile[]
+
+  @@index([ownerAccountId, type])
+}
+
+model WorkspaceMember {
+  id          Int                   @id @default(autoincrement())
+  workspaceId Int
+  accountId   Int
+  role        WorkspaceMemberRole
+  status      WorkspaceMemberStatus @default(active)
+  joinedAt    DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, accountId])
+  @@index([accountId, status])
+}
+
+model UserProfile {
+  id                    Int       @id @default(autoincrement())
+  accountId             Int       @unique
+  workspaceId           Int
+  nickname              String?   @db.VarChar(64)
+  industry              String?   @db.VarChar(64)
+  contentDirection      String?   @db.VarChar(128)
+  targetPlatform        String?   @db.VarChar(64)
+  experienceLevel       String?   @db.VarChar(32)
+  onboardingCompletedAt DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  account   Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique @db.VarChar(128)
+  id        Int       @id @default(autoincrement())
+  token     String    @unique @db.VarChar(128)
   role      UserRole?
-  name      String?  @db.VarChar(64)
-  createdAt DateTime @default(now())
+  name      String?   @db.VarChar(64)
+  createdAt DateTime  @default(now())
 
   signals Signal[]
   events  Event[]
