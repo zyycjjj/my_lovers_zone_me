@@ -4,10 +4,10 @@ import { WorkspaceDomain } from './workspace.domain';
 import { WorkspaceMemberRepository } from './repositories/workspace-member.repository';
 import { WorkspaceRepository } from './repositories/workspace.repository';
 import { WorkspaceService } from './workspace.service';
-import { AuthApiModule } from '../auth/auth-api.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [AuthApiModule],
+  imports: [AuthModule],
   controllers: [WorkspaceController],
   providers: [
     WorkspaceService,

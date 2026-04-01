@@ -6,7 +6,7 @@ import { UpsertOnboardingProfileDto } from './dto/upsert-onboarding-profile.dto'
 import { UserProfileRepository } from './repositories/user-profile.repository';
 import { WorkspaceRepository } from '../workspace/repositories/workspace.repository';
 import { PrismaService } from '../prisma/prisma.service';
-import { toRoutingResult } from '../auth/domain/auth-presenter';
+import { toRoutingResult } from '../auth/auth-presenter';
 import { DbClient } from '../auth/repositories/repository.types';
 
 @Injectable()

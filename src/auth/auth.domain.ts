@@ -20,8 +20,8 @@ import {
   toRoutingResult,
   toSessionDto,
   toWorkspaceSummary,
-} from './domain/auth-presenter';
-import { AliyunNumberAuthClient } from './domain/aliyun-number-auth.client';
+} from './auth-presenter';
+import { AliyunNumberAuthClient } from './aliyun-number-auth.client';
 
 @Injectable()
 export class AuthDomain {
