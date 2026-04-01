@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AdminGuard } from '../auth/admin.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
 import { AdminService } from './admin.service';
 
 @ApiTags('me')

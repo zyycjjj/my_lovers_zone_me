@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { DbClient } from './repository.types';
-import { pickDbClient } from './auth.repository-helpers';
+import { DbClient } from './auth.repository';
+
+const pickDbClient = (prisma: PrismaService, tx?: DbClient) => tx ?? prisma;
 
 @Injectable()
 export class AuthSessionRepository {
@@ -65,6 +66,20 @@ export class AuthSessionRepository {
   deleteByAccountId(accountId: number, tx?: DbClient) {
     return pickDbClient(this.prisma, tx).authSession.deleteMany({
       where: { accountId },
+    });
+  }
+}
+
+@Injectable()
+export class SessionAccountRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  findSessionBundle(sessionToken: string) {
+    return this.prisma.authSession.findUnique({
+      where: { sessionToken },
+      include: {
+        account: true,
+      },
     });
   }
 }

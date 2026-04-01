@@ -5,7 +5,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AiModule } from './ai/ai.module';
 import { AuthModule } from './auth/auth.module';
-import { UserTokenMiddleware } from './auth/user-token.middleware';
+import { UserTokenMiddleware } from './auth/guards/user-token.middleware';
 import { EventModule } from './event/event.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { PhotoModule } from './photo/photo.module';

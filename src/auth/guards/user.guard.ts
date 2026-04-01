@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class UserGuard implements CanActivate {

@@ -5,8 +5,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { AuthSessionRepository } from './repositories/auth-session.repository';
-import { WorkspaceMemberRepository } from '../workspace/repositories/workspace-member.repository';
+import { AuthSessionRepository } from '../repositories/session.repository';
+import { WorkspaceMemberRepository } from '../../workspace/repositories/workspace-member.repository';
 
 @Injectable()
 export class SessionAuthGuard implements CanActivate {

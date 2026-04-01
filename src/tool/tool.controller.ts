@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { UserGuard } from '../auth/user.guard';
+import { UserGuard } from '../auth/guards/user.guard';
 import { CommissionDto } from './dto/commission.dto';
 import { GenerateScriptDto } from './dto/generate-script.dto';
 import { GenerateTitleDto } from './dto/generate-title.dto';

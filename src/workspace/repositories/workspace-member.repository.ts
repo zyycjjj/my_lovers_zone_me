@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { DbClient } from '../../auth/repositories/repository.types';
-import { pickDbClient } from '../../auth/repositories/auth.repository-helpers';
+import { DbClient } from '../../auth/repositories/auth.repository';
+
+const pickDbClient = (prisma: PrismaService, tx?: DbClient) => tx ?? prisma;
 
 @Injectable()
 export class WorkspaceMemberRepository {

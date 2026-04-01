@@ -7,7 +7,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
 import { OnboardingService } from './onboarding.service';
 import { OnboardingStatusDto } from './dto/onboarding-status.dto';
 import { UpsertOnboardingProfileDto } from './dto/upsert-onboarding-profile.dto';

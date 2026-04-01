@@ -1,18 +1,16 @@
 import { Global, Module } from '@nestjs/common';
-import { AdminGuard } from './admin.guard';
 import { AuthController } from './auth.controller';
-import { AliyunNumberAuthClient } from './aliyun-number-auth.client';
-import { AuthDomain } from './auth.domain';
-import { AccountRepository } from './repositories/account.repository';
-import { AuthIdentityRepository } from './repositories/auth-identity.repository';
-import { AuthSessionRepository } from './repositories/auth-session.repository';
-import { SessionAccountRepository } from './repositories/session-account.repository';
+import { AliyunNumberAuthClient } from './domain/aliyun-number-auth.client';
+import { AuthDomain } from './domain/auth.domain';
+import { AccountRepository, AuthIdentityRepository } from './repositories/auth.repository';
+import { AuthSessionRepository, SessionAccountRepository } from './repositories/session.repository';
 import { AuthService } from './auth.service';
-import { SessionAuthGuard } from './session-auth.guard';
-import { UserGuard } from './user.guard';
+import { SessionAuthGuard } from './guards/session-auth.guard';
+import { UserGuard } from './guards/user.guard';
 import { UserProfileRepository } from '../onboarding/repositories/user-profile.repository';
 import { WorkspaceMemberRepository } from '../workspace/repositories/workspace-member.repository';
 import { WorkspaceRepository } from '../workspace/repositories/workspace.repository';
+import { AdminGuard } from './guards/admin.guard';
 
 @Global()
 @Module({

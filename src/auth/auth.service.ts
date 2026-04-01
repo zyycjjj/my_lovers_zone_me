@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { AuthDomain } from './auth.domain';
-import { LogoutDto } from './dto/logout.dto';
-import { NumberLoginDto } from './dto/number-login.dto';
-import { RefreshSessionDto } from './dto/refresh-session.dto';
+import { AuthDomain } from './domain/auth.domain';
+import { LogoutDto } from './dto/request/logout.dto';
+import { NumberLoginDto } from './dto/request/number-login.dto';
+import { RefreshSessionDto } from './dto/request/refresh-session.dto';
 
 @Injectable()
 export class AuthService {

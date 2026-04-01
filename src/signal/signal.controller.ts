@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { UserGuard } from '../auth/user.guard';
+import { UserGuard } from '../auth/guards/user.guard';
 import { SignalDto } from './dto/signal.dto';
 import { SignalService } from './signal.service';
 

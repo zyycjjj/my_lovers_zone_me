@@ -3,18 +3,15 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { PrismaService } from '../prisma/prisma.service';
-import { NumberLoginDto } from './dto/number-login.dto';
-import { RefreshSessionDto } from './dto/refresh-session.dto';
-import { LogoutDto } from './dto/logout.dto';
-import { AccountRepository } from './repositories/account.repository';
-import { AuthIdentityRepository } from './repositories/auth-identity.repository';
-import { AuthSessionRepository } from './repositories/auth-session.repository';
-import { SessionAccountRepository } from './repositories/session-account.repository';
-import { WorkspaceRepository } from '../workspace/repositories/workspace.repository';
-import { WorkspaceMemberRepository } from '../workspace/repositories/workspace-member.repository';
-import { UserProfileRepository } from '../onboarding/repositories/user-profile.repository';
-import { DbClient } from './repositories/repository.types';
+import { PrismaService } from '../../prisma/prisma.service';
+import { NumberLoginDto } from '../dto/request/number-login.dto';
+import { RefreshSessionDto } from '../dto/request/refresh-session.dto';
+import { LogoutDto } from '../dto/request/logout.dto';
+import { AccountRepository, AuthIdentityRepository, DbClient } from '../repositories/auth.repository';
+import { AuthSessionRepository, SessionAccountRepository } from '../repositories/session.repository';
+import { WorkspaceRepository } from '../../workspace/repositories/workspace.repository';
+import { WorkspaceMemberRepository } from '../../workspace/repositories/workspace-member.repository';
+import { UserProfileRepository } from '../../onboarding/repositories/user-profile.repository';
 import {
   toAccountSummary,
   toRoutingResult,

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AccountSummaryDto } from './account-summary.dto';
-import { RoutingResultDto } from './routing-result.dto';
-import { SessionDto } from './session.dto';
+import { AccountSummaryDto } from '../models/account-summary.dto';
+import { RoutingResultDto } from '../models/routing-result.dto';
+import { SessionDto } from '../models/session.dto';
 
 export class NumberLoginResponseDto {
   @ApiProperty({ type: AccountSummaryDto })

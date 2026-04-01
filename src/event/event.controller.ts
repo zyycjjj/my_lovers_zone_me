@@ -12,7 +12,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { Observable, map } from 'rxjs';
-import { UserGuard } from '../auth/user.guard';
+import { UserGuard } from '../auth/guards/user.guard';
 import { getDateKey } from '../common/date';
 import { EventDto } from './dto/event.dto';
 import { EventService } from './event.service';

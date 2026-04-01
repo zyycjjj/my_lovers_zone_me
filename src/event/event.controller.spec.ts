@@ -2,7 +2,7 @@ import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import type { Request } from 'express';
 import { Subject } from 'rxjs';
-import { UserGuard } from '../auth/user.guard';
+import { UserGuard } from '../auth/guards/user.guard';
 import { EventController } from './event.controller';
 import type { ActivityEvent } from './event.service';
 import { EventService } from './event.service';

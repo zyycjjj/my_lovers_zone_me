@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AccountSummaryDto } from './account-summary.dto';
-import { WorkspaceSummaryDto } from '../../workspace/dto/workspace-summary.dto';
+import { AccountSummaryDto } from '../models/account-summary.dto';
+import { WorkspaceSummaryDto } from '../../../workspace/dto/workspace-summary.dto';
 
 export class AuthMeDto {
   @ApiProperty({ type: AccountSummaryDto })

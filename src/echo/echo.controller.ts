@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { AdminGuard } from '../auth/admin.guard';
-import { UserGuard } from '../auth/user.guard';
+import { AdminGuard } from '../auth/guards/admin.guard';
+import { UserGuard } from '../auth/guards/user.guard';
 import { AdminEchoDto } from './dto/echo.dto';
 import { EchoService } from './echo.service';
 

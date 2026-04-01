@@ -22,7 +22,7 @@ import { diskStorage, type FileFilterCallback } from 'multer';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
 import { mkdirSync } from 'fs';
-import { UserGuard } from '../auth/user.guard';
+import { UserGuard } from '../auth/guards/user.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { PhotoDto } from './dto/photo.dto';
 import { PhotoService } from './photo.service';
