@@ -74,7 +74,9 @@ describe('OnboardingDomain', () => {
       accountId: 1,
       workspaceId: 101,
       nickname: '小杨',
+      businessRole: '个体商家',
       industry: '家居百货',
+      currentGoal: '先稳定每天发一条',
       contentDirection: '短视频带货',
       targetPlatform: '抖音',
       experienceLevel: 'beginner',
@@ -83,7 +85,9 @@ describe('OnboardingDomain', () => {
 
     const result = await domain.upsertProfile('session_ok', {
       nickname: '小杨',
+      businessRole: '个体商家',
       industry: '家居百货',
+      currentGoal: '先稳定每天发一条',
       contentDirection: '短视频带货',
       targetPlatform: '抖音',
       experienceLevel: 'beginner',
@@ -91,6 +95,8 @@ describe('OnboardingDomain', () => {
 
     expect(accounts.updateDisplayName).toHaveBeenCalledWith(1, '小杨', expect.any(Object));
     expect(result.profile.nickname).toBe('小杨');
+    expect(result.profile.businessRole).toBe('个体商家');
+    expect(result.profile.currentGoal).toBe('先稳定每天发一条');
     expect(result.routing.routeType).toBe('workspace_home');
   });
 

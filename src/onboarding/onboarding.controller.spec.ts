@@ -35,12 +35,22 @@ describe('OnboardingController', () => {
 
   it('提交建档资料应透传 sessionToken 和 body', async () => {
     onboardingService.upsertProfile.mockResolvedValue({
-      profile: { nickname: '小杨' },
+      profile: {
+        nickname: '小杨',
+        businessRole: '个体商家',
+        currentGoal: '先稳定每天发一条',
+      },
       routing: { routeType: 'workspace_home' },
     });
 
     const req = { sessionToken: 'session_ok' } as any;
-    const body = { nickname: '小杨', targetPlatform: '抖音' };
+    const body = {
+      nickname: '小杨',
+      businessRole: '个体商家',
+      industry: '家居百货',
+      currentGoal: '先稳定每天发一条',
+      targetPlatform: '抖音',
+    };
     const result = await controller.upsertProfile(req, body);
 
     expect(onboardingService.upsertProfile).toHaveBeenCalledWith(
@@ -48,5 +58,6 @@ describe('OnboardingController', () => {
       body,
     );
     expect(result.profile.nickname).toBe('小杨');
+    expect(result.profile.businessRole).toBe('个体商家');
   });
 });

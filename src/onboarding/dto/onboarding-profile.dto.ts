@@ -13,8 +13,14 @@ export class OnboardingProfileDto {
   @ApiPropertyOptional({ example: '小杨' })
   nickname?: string | null;
 
+  @ApiPropertyOptional({ example: '个体商家' })
+  businessRole?: string | null;
+
   @ApiPropertyOptional({ example: '家居百货' })
   industry?: string | null;
+
+  @ApiPropertyOptional({ example: '先稳定每天发一条' })
+  currentGoal?: string | null;
 
   @ApiPropertyOptional({ example: '短视频带货' })
   contentDirection?: string | null;

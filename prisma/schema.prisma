@@ -141,7 +141,9 @@ model UserProfile {
   accountId             Int       @unique
   workspaceId           Int
   nickname              String?   @db.VarChar(64)
+  businessRole          String?   @db.VarChar(64)
   industry              String?   @db.VarChar(64)
+  currentGoal           String?   @db.VarChar(128)
   contentDirection      String?   @db.VarChar(128)
   targetPlatform        String?   @db.VarChar(64)
   experienceLevel       String?   @db.VarChar(32)

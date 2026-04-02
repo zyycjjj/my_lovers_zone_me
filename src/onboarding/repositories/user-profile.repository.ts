@@ -19,7 +19,9 @@ export class UserProfileRepository {
       accountId: number;
       workspaceId: number;
       nickname: string;
+      businessRole?: string;
       industry?: string;
+      currentGoal?: string;
       contentDirection?: string;
       targetPlatform?: string;
       experienceLevel?: string;
