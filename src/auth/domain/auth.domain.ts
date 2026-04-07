@@ -1,10 +1,12 @@
 import {
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NumberLoginDto } from '../dto/request/number-login.dto';
+import { DevLoginDto } from '../dto/request/dev-login.dto';
 import { RefreshSessionDto } from '../dto/request/refresh-session.dto';
 import { LogoutDto } from '../dto/request/logout.dto';
 import { AccountRepository, AuthIdentityRepository, DbClient } from '../repositories/auth.repository';
@@ -40,75 +42,20 @@ export class AuthDomain {
 
   async numberLogin(payload: NumberLoginDto) {
     const { phone } = await this.aliyun.getPhoneWithToken(payload.spToken);
-    const result = await this.prisma.$transaction(async (tx: DbClient) => {
-      let account = await this.accounts.findByPhone(phone, tx);
-      if (!account) {
-        account = await this.accounts.createByPhone(phone, tx);
-      }
+    const result = await this.loginWithPhone(phone, 'aliyun_number_auth');
 
-      const identity = await this.identities.findByProviderPhone(
-        'aliyun_number_auth',
-        phone,
-        tx,
-      );
-      if (!identity) {
-        await this.identities.createPrimaryIdentity(
-          account.id,
-          'aliyun_number_auth',
-          phone,
-          phone,
-          tx,
-        );
-      }
+    return this.toLoginResponse(result);
+  }
 
-      let workspace = await this.workspaces.findPersonalOwnedByAccountId(
-        account.id,
-        tx,
-      );
-      if (!workspace) {
-        const workspaceName = account.displayName
-          ? `${account.displayName}的空间`
-          : '我的空间';
-        workspace = await this.workspaces.createPersonalWorkspace(
-          account.id,
-          workspaceName,
-          tx,
-        );
-      }
+  async devLogin(payload: DevLoginDto) {
+    if (process.env['NODE_ENV'] === 'production') {
+      throw new ForbiddenException('当前环境不允许本地测试登录');
+    }
 
-      await this.workspaceMembers.upsertOwnerMember(workspace.id, account.id, tx);
+    const phone = payload.phone?.trim() || '13900000000';
+    const result = await this.loginWithPhone(phone, 'sms_code', payload.displayName?.trim());
 
-      const session = await this.sessions.create(
-        {
-          accountId: account.id,
-          sessionToken: this.createToken('session'),
-          refreshToken: this.createToken('refresh'),
-          expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        },
-        tx,
-      );
-
-      const profile = await this.profiles.findByAccountId(account.id, tx);
-      const members = await this.workspaceMembers.findByAccountId(account.id, tx);
-
-      return {
-        account,
-        session,
-        workspace,
-        profile,
-        workspaceCount: members.length,
-      };
-    });
-
-    return {
-      account: toAccountSummary(result.account),
-      session: toSessionDto(result.session),
-      routing: toRoutingResult({
-        profile: result.profile,
-        workspaceId: result.workspace.id,
-        workspaceCount: result.workspaceCount,
-      }),
-    };
+    return this.toLoginResponse(result);
   }
 
   async getCurrentAccount(sessionToken: string) {
@@ -188,6 +135,97 @@ export class AuthDomain {
       profile,
       currentWorkspace,
       workspaceCount: members.length,
+    };
+  }
+
+  private async loginWithPhone(
+    phone: string,
+    provider: 'aliyun_number_auth' | 'sms_code',
+    displayName?: string,
+  ) {
+    return this.prisma.$transaction(async (tx: DbClient) => {
+      let account = await this.accounts.findByPhone(phone, tx);
+      if (!account) {
+        account = await this.accounts.createByPhone(phone, tx);
+      }
+
+      if (displayName && account.displayName !== displayName) {
+        account = await tx.account.update({
+          where: { id: account.id },
+          data: { displayName },
+        });
+      }
+
+      const identity = await this.identities.findByProviderPhone(
+        provider,
+        phone,
+        tx,
+      );
+      if (!identity) {
+        await this.identities.createPrimaryIdentity(
+          account.id,
+          provider,
+          phone,
+          phone,
+          tx,
+        );
+      }
+
+      let workspace = await this.workspaces.findPersonalOwnedByAccountId(
+        account.id,
+        tx,
+      );
+      if (!workspace) {
+        const workspaceName = account.displayName
+          ? `${account.displayName}的空间`
+          : '我的空间';
+        workspace = await this.workspaces.createPersonalWorkspace(
+          account.id,
+          workspaceName,
+          tx,
+        );
+      }
+
+      await this.workspaceMembers.upsertOwnerMember(workspace.id, account.id, tx);
+
+      const session = await this.sessions.create(
+        {
+          accountId: account.id,
+          sessionToken: this.createToken('session'),
+          refreshToken: this.createToken('refresh'),
+          expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+        tx,
+      );
+
+      const profile = await this.profiles.findByAccountId(account.id, tx);
+      const members = await this.workspaceMembers.findByAccountId(account.id, tx);
+
+      return {
+        account,
+        session,
+        workspace,
+        profile,
+        workspaceCount: members.length,
+      };
+    });
+  }
+
+  private toLoginResponse(result: {
+    account: Awaited<ReturnType<AccountRepository['createByPhone']>>;
+    session: Awaited<ReturnType<AuthSessionRepository['create']>>;
+    workspace: Awaited<ReturnType<WorkspaceRepository['createPersonalWorkspace']>>;
+    profile: Awaited<ReturnType<UserProfileRepository['findByAccountId']>>;
+    workspaceCount: number;
+  }) {
+    return {
+      account: toAccountSummary(result.account),
+      session: toSessionDto(result.session),
+      routing: toRoutingResult({
+        profile: result.profile,
+        workspaceId: result.workspace.id,
+        workspaceCount: result.workspaceCount,
+      }),
     };
   }
 

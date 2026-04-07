@@ -24,6 +24,7 @@ import { ApiOkDto } from '../common/api-ok.dto';
 import { ApiResponseInterceptor } from '../common/api-response.interceptor';
 import { ApiSuccessResponse } from '../common/api-success-response.decorator';
 import { AuthMeDto } from './dto/response/auth-me.dto';
+import { DevLoginDto } from './dto/request/dev-login.dto';
 import { LogoutDto } from './dto/request/logout.dto';
 import { NumberAuthTokenDto } from './dto/response/number-auth-token.dto';
 import { NumberLoginDto } from './dto/request/number-login.dto';
@@ -53,6 +54,15 @@ export class AuthController {
   @ApiSuccessResponse(NumberLoginResponseDto)
   async numberLogin(@Body() body: NumberLoginDto) {
     return this.auth.numberLogin(body);
+  }
+
+  @Post('dev-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '本地测试登录' })
+  @ApiBody({ type: DevLoginDto })
+  @ApiSuccessResponse(NumberLoginResponseDto)
+  async devLogin(@Body() body: DevLoginDto) {
+    return this.auth.devLogin(body);
   }
 
   @Get('me')
