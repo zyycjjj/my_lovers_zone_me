@@ -143,72 +143,78 @@ export class AuthDomain {
     provider: 'aliyun_number_auth' | 'sms_code',
     displayName?: string,
   ) {
-    return this.prisma.$transaction(async (tx: DbClient) => {
-      let account = await this.accounts.findByPhone(phone, tx);
-      if (!account) {
-        account = await this.accounts.createByPhone(phone, tx);
-      }
+    return this.prisma.$transaction(
+      async (tx: DbClient) => {
+        let account = await this.accounts.findByPhone(phone, tx);
+        if (!account) {
+          account = await this.accounts.createByPhone(phone, tx);
+        }
 
-      if (displayName && account.displayName !== displayName) {
-        account = await tx.account.update({
-          where: { id: account.id },
-          data: { displayName },
-        });
-      }
+        if (displayName && account.displayName !== displayName) {
+          account = await tx.account.update({
+            where: { id: account.id },
+            data: { displayName },
+          });
+        }
 
-      const identity = await this.identities.findByProviderPhone(
-        provider,
-        phone,
-        tx,
-      );
-      if (!identity) {
-        await this.identities.createPrimaryIdentity(
-          account.id,
+        const identity = await this.identities.findByProviderPhone(
           provider,
           phone,
-          phone,
           tx,
         );
-      }
+        if (!identity) {
+          await this.identities.createPrimaryIdentity(
+            account.id,
+            provider,
+            phone,
+            phone,
+            tx,
+          );
+        }
 
-      let workspace = await this.workspaces.findPersonalOwnedByAccountId(
-        account.id,
-        tx,
-      );
-      if (!workspace) {
-        const workspaceName = account.displayName
-          ? `${account.displayName}的空间`
-          : '我的空间';
-        workspace = await this.workspaces.createPersonalWorkspace(
+        let workspace = await this.workspaces.findPersonalOwnedByAccountId(
           account.id,
-          workspaceName,
           tx,
         );
-      }
+        if (!workspace) {
+          const workspaceName = account.displayName
+            ? `${account.displayName}的空间`
+            : '我的空间';
+          workspace = await this.workspaces.createPersonalWorkspace(
+            account.id,
+            workspaceName,
+            tx,
+          );
+        }
 
-      await this.workspaceMembers.upsertOwnerMember(workspace.id, account.id, tx);
+        await this.workspaceMembers.upsertOwnerMember(workspace.id, account.id, tx);
 
-      const session = await this.sessions.create(
-        {
-          accountId: account.id,
-          sessionToken: this.createToken('session'),
-          refreshToken: this.createToken('refresh'),
-          expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        },
-        tx,
-      );
+        const session = await this.sessions.create(
+          {
+            accountId: account.id,
+            sessionToken: this.createToken('session'),
+            refreshToken: this.createToken('refresh'),
+            expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          },
+          tx,
+        );
 
-      const profile = await this.profiles.findByAccountId(account.id, tx);
-      const members = await this.workspaceMembers.findByAccountId(account.id, tx);
+        const profile = await this.profiles.findByAccountId(account.id, tx);
+        const members = await this.workspaceMembers.findByAccountId(account.id, tx);
 
-      return {
-        account,
-        session,
-        workspace,
-        profile,
-        workspaceCount: members.length,
-      };
-    });
+        return {
+          account,
+          session,
+          workspace,
+          profile,
+          workspaceCount: members.length,
+        };
+      },
+      {
+        maxWait: 15_000,
+        timeout: 20_000,
+      },
+    );
   }
 
   private toLoginResponse(result: {

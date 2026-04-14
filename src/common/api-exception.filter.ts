@@ -38,6 +38,8 @@ export class ApiExceptionFilter implements ExceptionFilter {
       return;
     }
 
+    console.error('Unhandled exception:', exception);
+
     res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       code: 'INTERNAL_ERROR',
       message: '服务内部错误',
