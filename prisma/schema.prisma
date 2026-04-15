@@ -57,6 +57,8 @@ model Account {
   id              Int           @id @default(autoincrement())
   phone           String?       @unique @db.VarChar(32)
   phoneVerifiedAt DateTime?
+  passwordHash    String?       @db.VarChar(128)
+  passwordSalt    String?       @db.VarChar(64)
   displayName     String?       @db.VarChar(64)
   avatarUrl       String?       @db.VarChar(512)
   status          AccountStatus @default(active)

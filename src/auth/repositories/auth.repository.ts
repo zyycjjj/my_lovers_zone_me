@@ -34,6 +34,45 @@ export class AccountRepository {
       data: { displayName },
     });
   }
+
+  createPasswordAccount(
+    payload: {
+      phone: string;
+      passwordHash: string;
+      passwordSalt: string;
+      displayName?: string;
+    },
+    tx?: DbClient,
+  ) {
+    return pickDbClient(this.prisma, tx).account.create({
+      data: {
+        phone: payload.phone,
+        passwordHash: payload.passwordHash,
+        passwordSalt: payload.passwordSalt,
+        displayName: payload.displayName || undefined,
+        status: 'active',
+      },
+    });
+  }
+
+  updatePasswordCredential(
+    id: number,
+    payload: {
+      passwordHash: string;
+      passwordSalt: string;
+      displayName?: string;
+    },
+    tx?: DbClient,
+  ) {
+    return pickDbClient(this.prisma, tx).account.update({
+      where: { id },
+      data: {
+        passwordHash: payload.passwordHash,
+        passwordSalt: payload.passwordSalt,
+        ...(payload.displayName ? { displayName: payload.displayName } : {}),
+      },
+    });
+  }
 }
 
 @Injectable()

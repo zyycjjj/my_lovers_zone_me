@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
+import { AuthCaptchaService } from './domain/auth-captcha.service';
 import { AliyunNumberAuthClient } from './domain/aliyun-number-auth.client';
 import { AuthDomain } from './domain/auth.domain';
 import { AccountRepository, AuthIdentityRepository } from './repositories/auth.repository';
@@ -21,6 +22,7 @@ import { AdminGuard } from './guards/admin.guard';
     SessionAuthGuard,
     AuthService,
     AuthDomain,
+    AuthCaptchaService,
     AliyunNumberAuthClient,
     AccountRepository,
     AuthIdentityRepository,
@@ -36,6 +38,7 @@ import { AdminGuard } from './guards/admin.guard';
     SessionAuthGuard,
     AuthService,
     AuthDomain,
+    AuthCaptchaService,
     AliyunNumberAuthClient,
     AccountRepository,
     AuthIdentityRepository,

@@ -1,0 +1,3 @@
+ALTER TABLE `Account`
+  ADD COLUMN `passwordHash` VARCHAR(128) NULL,
+  ADD COLUMN `passwordSalt` VARCHAR(64) NULL;

@@ -28,6 +28,9 @@ import { DevLoginDto } from './dto/request/dev-login.dto';
 import { LogoutDto } from './dto/request/logout.dto';
 import { NumberAuthTokenDto } from './dto/response/number-auth-token.dto';
 import { NumberLoginDto } from './dto/request/number-login.dto';
+import { PasswordLoginDto } from './dto/request/password-login.dto';
+import { PasswordRegisterDto } from './dto/request/password-register.dto';
+import { PasswordCaptchaDto } from './dto/response/password-captcha.dto';
 import { NumberLoginResponseDto } from './dto/response/number-login-response.dto';
 import { RefreshSessionDto } from './dto/request/refresh-session.dto';
 import { RoutingResultDto } from './dto/models/routing-result.dto';
@@ -47,6 +50,13 @@ export class AuthController {
     return this.auth.getNumberAuthToken();
   }
 
+  @Get('password-captcha')
+  @ApiOperation({ summary: '获取手机号密码登录/注册图形验证码' })
+  @ApiSuccessResponse(PasswordCaptchaDto)
+  async getPasswordCaptcha() {
+    return this.auth.getPasswordCaptcha();
+  }
+
   @Post('number-login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '号码认证登录' })
@@ -63,6 +73,24 @@ export class AuthController {
   @ApiSuccessResponse(NumberLoginResponseDto)
   async devLogin(@Body() body: DevLoginDto) {
     return this.auth.devLogin(body);
+  }
+
+  @Post('password-register')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '手机号密码注册' })
+  @ApiBody({ type: PasswordRegisterDto })
+  @ApiSuccessResponse(NumberLoginResponseDto)
+  async passwordRegister(@Body() body: PasswordRegisterDto) {
+    return this.auth.passwordRegister(body);
+  }
+
+  @Post('password-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '手机号密码登录' })
+  @ApiBody({ type: PasswordLoginDto })
+  @ApiSuccessResponse(NumberLoginResponseDto)
+  async passwordLogin(@Body() body: PasswordLoginDto) {
+    return this.auth.passwordLogin(body);
   }
 
   @Get('me')

@@ -5,7 +5,10 @@ describe('AuthController', () => {
   let controller: AuthController;
   const authService = {
     getNumberAuthToken: jest.fn(),
+    getPasswordCaptcha: jest.fn(),
     numberLogin: jest.fn(),
+    passwordRegister: jest.fn(),
+    passwordLogin: jest.fn(),
     me: jest.fn(),
     routing: jest.fn(),
     refresh: jest.fn(),
@@ -27,6 +30,36 @@ describe('AuthController', () => {
     const result = await controller.numberLogin(body);
 
     expect(authService.numberLogin).toHaveBeenCalledWith(body);
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('手机号密码注册应透传 dto 到 service', async () => {
+    authService.passwordRegister.mockResolvedValue({ ok: true });
+
+    const body = {
+      phone: '13800138000',
+      password: 'Memory@2026',
+      captchaId: 'captcha_1',
+      captchaCode: 'ABCD',
+    };
+    const result = await controller.passwordRegister(body as any);
+
+    expect(authService.passwordRegister).toHaveBeenCalledWith(body);
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('手机号密码登录应透传 dto 到 service', async () => {
+    authService.passwordLogin.mockResolvedValue({ ok: true });
+
+    const body = {
+      phone: '13800138000',
+      password: 'Memory@2026',
+      captchaId: 'captcha_1',
+      captchaCode: 'ABCD',
+    };
+    const result = await controller.passwordLogin(body as any);
+
+    expect(authService.passwordLogin).toHaveBeenCalledWith(body);
     expect(result).toEqual({ ok: true });
   });
 
