@@ -49,4 +49,35 @@ export class AdminController {
   ) {
     return this.admin.seedUsers(body);
   }
+
+  @Get('payment-orders')
+  @ApiOperation({ summary: '支付订单列表' })
+  async paymentOrders(@Query('limit') limit?: string) {
+    const take = limit ? Number(limit) : 100;
+    return this.admin.paymentOrders(Number.isNaN(take) ? 100 : take);
+  }
+
+  @Post('payment-orders/approve')
+  @ApiOperation({ summary: '审核通过并开通套餐' })
+  async approvePaymentOrder(
+    @Body()
+    body: {
+      orderId: number;
+      note?: string;
+    },
+  ) {
+    return this.admin.approvePaymentOrder(body.orderId, body.note);
+  }
+
+  @Post('payment-orders/reject')
+  @ApiOperation({ summary: '驳回支付订单' })
+  async rejectPaymentOrder(
+    @Body()
+    body: {
+      orderId: number;
+      note?: string;
+    },
+  ) {
+    return this.admin.rejectPaymentOrder(body.orderId, body.note);
+  }
 }

@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { getDateKey } from '../common/date';
+import { PaymentsService } from '../payments/payments.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly payments: PaymentsService,
+  ) {}
 
   async summary() {
     const date = getDateKey();
@@ -94,5 +98,17 @@ export class AdminService {
     ]);
 
     return { me, girlfriend, test };
+  }
+
+  async paymentOrders(limit = 100) {
+    return this.payments.listAllOrders(limit);
+  }
+
+  async approvePaymentOrder(orderId: number, note?: string) {
+    return this.payments.approveOrder(orderId, note);
+  }
+
+  async rejectPaymentOrder(orderId: number, note?: string) {
+    return this.payments.rejectOrder(orderId, note);
   }
 }

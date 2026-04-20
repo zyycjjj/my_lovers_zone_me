@@ -53,6 +53,20 @@ enum WorkspaceMemberStatus {
   removed
 }
 
+enum PaymentPlanKey {
+  experience
+  pro
+  team
+}
+
+enum PaymentOrderStatus {
+  pending
+  paid
+  activated
+  rejected
+  refunded
+}
+
 model Account {
   id              Int           @id @default(autoincrement())
   phone           String?       @unique @db.VarChar(32)
@@ -70,6 +84,8 @@ model Account {
   ownedWorkspaces  Workspace[]
   workspaceMembers WorkspaceMember[]
   profile          UserProfile?
+  paymentOrders    PaymentOrder[]
+  subscriptions    Subscription[]
 }
 
 model AuthIdentity {
@@ -170,8 +186,50 @@ model User {
   events  Event[]
   echoes  Echo[]
   photos  Photo[]
+  paymentOrders PaymentOrder[]
 
   @@index([role])
+}
+
+model PaymentOrder {
+  id          Int                @id @default(autoincrement())
+  orderNo     String             @unique @db.VarChar(32)
+  userId      Int
+  accountId   Int?
+  planKey     PaymentPlanKey
+  amountFen   Int
+  status      PaymentOrderStatus @default(pending)
+  channel     String?            @db.VarChar(32)
+  paymentRef  String?            @db.VarChar(128)
+  proofNote   String?            @db.VarChar(255)
+  adminNote   String?            @db.VarChar(255)
+  paidAt      DateTime?
+  activatedAt DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([accountId, createdAt])
+  @@index([status, createdAt])
+}
+
+model Subscription {
+  id         Int            @id @default(autoincrement())
+  accountId  Int
+  planKey    PaymentPlanKey
+  status     String         @default("active") @db.VarChar(16)
+  startedAt  DateTime       @default(now())
+  expiredAt  DateTime?
+  orderId    Int?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, status, expiredAt])
 }
 
 model Signal {
