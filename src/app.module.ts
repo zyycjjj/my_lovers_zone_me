@@ -15,6 +15,7 @@ import { ToolModule } from './tool/tool.module';
 import { EchoModule } from './echo/echo.module';
 import { AdminModule } from './admin/admin.module';
 import { WorkspaceModule } from './workspace/workspace.module';
+import { TrialModule } from './trial/trial.module';
 import { AppController } from './app.controller';
 
 const requestLogger = (req: Request, res: Response, next: () => void) => {
@@ -46,6 +47,7 @@ const requestLogger = (req: Request, res: Response, next: () => void) => {
     AdminModule,
     OnboardingModule,
     WorkspaceModule,
+    TrialModule,
   ],
   controllers: [AppController],
 })
