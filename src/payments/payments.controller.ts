@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { UserGuard } from '../auth/guards/user.guard';
@@ -28,6 +37,24 @@ export class PaymentsController {
   listMyOrders(@Req() req: Request) {
     return this.payments.listMyOrders({
       userId: req.userId!,
+      accountId: req.accountId,
+    });
+  }
+
+  @Get('orders/:id')
+  @ApiOperation({ summary: '支付订单详情' })
+  getOrder(@Req() req: Request, @Param('id', ParseIntPipe) id: number) {
+    return this.payments.getMyOrderById({
+      orderId: id,
+      userId: req.userId!,
+      accountId: req.accountId,
+    });
+  }
+
+  @Get('subscription/me')
+  @ApiOperation({ summary: '我的订阅状态' })
+  mySubscription(@Req() req: Request) {
+    return this.payments.getMySubscription({
       accountId: req.accountId,
     });
   }

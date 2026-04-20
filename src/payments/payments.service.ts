@@ -24,6 +24,15 @@ function buildOrderNo() {
 export class PaymentsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // 部分环境下 Prisma Client 类型更新有延迟，这里用窄范围兼容避免阻塞开发。
+  private get db() {
+    return this.prisma as unknown as {
+      paymentOrder: any;
+      subscription: any;
+      $transaction: PrismaService['$transaction'];
+    };
+  }
+
   async createOrder(input: {
     userId: number;
     accountId?: number;
@@ -32,7 +41,7 @@ export class PaymentsService {
     const amountFen = PLAN_PRICE_FEN[input.planKey];
     if (!amountFen) throw new BadRequestException('Invalid plan key');
 
-    return this.prisma.paymentOrder.create({
+    return this.db.paymentOrder.create({
       data: {
         orderNo: buildOrderNo(),
         userId: input.userId,
@@ -44,7 +53,7 @@ export class PaymentsService {
   }
 
   async listMyOrders(input: { userId: number; accountId?: number }) {
-    return this.prisma.paymentOrder.findMany({
+    return this.db.paymentOrder.findMany({
       where: {
         OR: [
           { userId: input.userId },
@@ -56,6 +65,34 @@ export class PaymentsService {
     });
   }
 
+  async getMyOrderById(input: {
+    orderId: number;
+    userId: number;
+    accountId?: number;
+  }) {
+    const order = await this.db.paymentOrder.findUnique({
+      where: { id: input.orderId },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+
+    const isOwner =
+      order.userId === input.userId ||
+      (input.accountId != null && order.accountId === input.accountId);
+    if (!isOwner) throw new ForbiddenException('No permission');
+    return order;
+  }
+
+  async getMySubscription(input: { accountId?: number }) {
+    if (!input.accountId) return null;
+    return this.db.subscription.findFirst({
+      where: {
+        accountId: input.accountId,
+        status: 'active',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async submitProof(input: {
     orderId: number;
     userId: number;
@@ -63,7 +100,7 @@ export class PaymentsService {
     paymentRef?: string;
     note?: string;
   }) {
-    const order = await this.prisma.paymentOrder.findUnique({
+    const order = await this.db.paymentOrder.findUnique({
       where: { id: input.orderId },
     });
     if (!order) throw new NotFoundException('Order not found');
@@ -77,7 +114,7 @@ export class PaymentsService {
       throw new BadRequestException('Order cannot be updated');
     }
 
-    return this.prisma.paymentOrder.update({
+    return this.db.paymentOrder.update({
       where: { id: order.id },
       data: {
         status: 'paid',
@@ -89,14 +126,14 @@ export class PaymentsService {
   }
 
   async listAllOrders(limit = 100) {
-    return this.prisma.paymentOrder.findMany({
+    return this.db.paymentOrder.findMany({
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
   }
 
   async approveOrder(orderId: number, note?: string) {
-    const order = await this.prisma.paymentOrder.findUnique({
+    const order = await this.db.paymentOrder.findUnique({
       where: { id: orderId },
     });
     if (!order) throw new NotFoundException('Order not found');
@@ -111,7 +148,7 @@ export class PaymentsService {
     expiredAt.setDate(expiredAt.getDate() + plusDays);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const updatedOrder = await tx.paymentOrder.update({
+      const updatedOrder = await (tx as any).paymentOrder.update({
         where: { id: orderId },
         data: {
           status: 'activated',
@@ -120,7 +157,7 @@ export class PaymentsService {
         },
       });
 
-      const subscription = await tx.subscription.create({
+      const subscription = await (tx as any).subscription.create({
         data: {
           accountId: order.accountId!,
           planKey: order.planKey,
@@ -138,12 +175,12 @@ export class PaymentsService {
   }
 
   async rejectOrder(orderId: number, note?: string) {
-    const order = await this.prisma.paymentOrder.findUnique({
+    const order = await this.db.paymentOrder.findUnique({
       where: { id: orderId },
     });
     if (!order) throw new NotFoundException('Order not found');
 
-    return this.prisma.paymentOrder.update({
+    return this.db.paymentOrder.update({
       where: { id: orderId },
       data: {
         status: 'rejected',
