@@ -93,6 +93,26 @@ export class PaymentsService {
     });
   }
 
+  async getMyPendingSummary(input: { userId: number; accountId?: number }) {
+    const where = {
+      OR: [
+        { userId: input.userId },
+        ...(input.accountId ? [{ accountId: input.accountId }] : []),
+      ],
+      status: { in: ['pending', 'paid'] as const },
+    };
+
+    const [count, latest] = await Promise.all([
+      this.db.paymentOrder.count({ where }),
+      this.db.paymentOrder.findFirst({
+        where,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return { count, latest };
+  }
+
   async submitProof(input: {
     orderId: number;
     userId: number;

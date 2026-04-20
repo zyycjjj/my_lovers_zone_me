@@ -59,6 +59,15 @@ export class PaymentsController {
     });
   }
 
+  @Get('pending/me')
+  @ApiOperation({ summary: '我的待处理订单统计' })
+  myPending(@Req() req: Request) {
+    return this.payments.getMyPendingSummary({
+      userId: req.userId!,
+      accountId: req.accountId,
+    });
+  }
+
   @Post('orders/:id/proof')
   @ApiOperation({ summary: '提交支付凭证（人工审核）' })
   submitProof(
