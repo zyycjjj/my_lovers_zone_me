@@ -34,6 +34,7 @@ jobs:
           PORT=${{ secrets.PORT }}
           APP_TIMEZONE=${{ secrets.APP_TIMEZONE }}
           AI_BASE_URL=${{ secrets.AI_BASE_URL }}
+          AI_CHAT_COMPLETIONS_URL=${{ secrets.AI_CHAT_COMPLETIONS_URL }}
           AI_API_KEY=${{ secrets.AI_API_KEY }}
           AI_MODEL=${{ secrets.AI_MODEL }}
           ADMIN_PASS=${{ secrets.ADMIN_PASS }}
