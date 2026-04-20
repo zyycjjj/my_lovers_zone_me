@@ -111,4 +111,19 @@ export class AdminService {
   async rejectPaymentOrder(orderId: number, note?: string) {
     return this.payments.rejectOrder(orderId, note);
   }
+
+  async paymentConfig() {
+    return this.payments.getPublicPaymentConfig();
+  }
+
+  async savePaymentConfig(input: {
+    unifiedLink?: string;
+    alipayLink?: string;
+    wechatLink?: string;
+    alipayQrImage?: string;
+    wechatQrImage?: string;
+    contactText?: string;
+  }) {
+    return this.payments.savePaymentConfig(input);
+  }
 }

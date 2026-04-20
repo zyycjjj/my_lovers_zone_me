@@ -29,8 +29,32 @@ export class PaymentsService {
     return this.prisma as unknown as {
       paymentOrder: any;
       subscription: any;
+      appConfig: any;
       $transaction: PrismaService['$transaction'];
     };
+  }
+
+  private get defaultPaymentConfig() {
+    return {
+      unifiedLink: process.env['NEXT_PUBLIC_PAYMENT_LINK_UNIFIED'] || '',
+      alipayLink: process.env['NEXT_PUBLIC_PAYMENT_LINK_ALIPAY'] || '',
+      wechatLink: process.env['NEXT_PUBLIC_PAYMENT_LINK_WECHAT'] || '',
+      alipayQrImage: process.env['NEXT_PUBLIC_PAYMENT_QR_ALIPAY'] || '',
+      wechatQrImage: process.env['NEXT_PUBLIC_PAYMENT_QR_WECHAT'] || '',
+      contactText:
+        process.env['NEXT_PUBLIC_PAYMENT_CONTACT'] || '请联系客服完成支付',
+    };
+  }
+
+  private parseConfig(raw?: string | null) {
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return {};
+      return parsed as Record<string, unknown>;
+    } catch {
+      return {};
+    }
   }
 
   async createOrder(input: {
@@ -50,6 +74,47 @@ export class PaymentsService {
         amountFen,
       },
     });
+  }
+
+  async getPublicPaymentConfig() {
+    const row = await this.db.appConfig.findUnique({
+      where: { key: 'payment_config' },
+      select: { value: true },
+    });
+    const fromDb = this.parseConfig(row?.value);
+    return {
+      ...this.defaultPaymentConfig,
+      ...fromDb,
+    };
+  }
+
+  async savePaymentConfig(input: {
+    unifiedLink?: string;
+    alipayLink?: string;
+    wechatLink?: string;
+    alipayQrImage?: string;
+    wechatQrImage?: string;
+    contactText?: string;
+  }) {
+    const normalized = {
+      unifiedLink: (input.unifiedLink || '').trim(),
+      alipayLink: (input.alipayLink || '').trim(),
+      wechatLink: (input.wechatLink || '').trim(),
+      alipayQrImage: (input.alipayQrImage || '').trim(),
+      wechatQrImage: (input.wechatQrImage || '').trim(),
+      contactText: (input.contactText || '').trim(),
+    };
+    await this.db.appConfig.upsert({
+      where: { key: 'payment_config' },
+      create: {
+        key: 'payment_config',
+        value: JSON.stringify(normalized),
+      },
+      update: {
+        value: JSON.stringify(normalized),
+      },
+    });
+    return this.getPublicPaymentConfig();
   }
 
   async listMyOrders(input: { userId: number; accountId?: number }) {

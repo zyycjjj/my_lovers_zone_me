@@ -13,8 +13,8 @@ export class EchoController {
 
   @Post()
   @ApiOperation({ summary: '新增一句回声' })
-  @ApiBearerAuth('AdminPass')
-  @UseGuards(AdminGuard)
+  @ApiBearerAuth('SessionToken')
+  @UseGuards(UserGuard, AdminGuard)
   async create(@Body() body: AdminEchoDto) {
     return this.echoes.createByToken(body.token, { text: body.text });
   }

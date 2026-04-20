@@ -27,10 +27,6 @@ async function bootstrap() {
       { type: 'apiKey', in: 'header', name: 'x-user-token' },
       'UserToken',
     )
-    .addApiKey(
-      { type: 'apiKey', in: 'header', name: 'x-admin-pass' },
-      'AdminPass',
-    )
     .build();
   const document = SwaggerModule.createDocument(app, docConfig);
   SwaggerModule.setup('docs', app, document);

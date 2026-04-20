@@ -1,12 +1,13 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '../auth/guards/admin.guard';
+import { UserGuard } from '../auth/guards/user.guard';
 import { AdminService } from './admin.service';
 
 @ApiTags('me')
-@ApiBearerAuth('AdminPass')
+@ApiBearerAuth('SessionToken')
 @Controller('api/me')
-@UseGuards(AdminGuard)
+@UseGuards(UserGuard, AdminGuard)
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
@@ -79,5 +80,27 @@ export class AdminController {
     },
   ) {
     return this.admin.rejectPaymentOrder(body.orderId, body.note);
+  }
+
+  @Get('payment-config')
+  @ApiOperation({ summary: '支付配置' })
+  paymentConfig() {
+    return this.admin.paymentConfig();
+  }
+
+  @Post('payment-config')
+  @ApiOperation({ summary: '保存支付配置' })
+  savePaymentConfig(
+    @Body()
+    body: {
+      unifiedLink?: string;
+      alipayLink?: string;
+      wechatLink?: string;
+      alipayQrImage?: string;
+      wechatQrImage?: string;
+      contactText?: string;
+    },
+  ) {
+    return this.admin.savePaymentConfig(body);
   }
 }

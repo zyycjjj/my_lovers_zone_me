@@ -14,13 +14,50 @@ import type { Request } from 'express';
 import { Observable, map } from 'rxjs';
 import { UserGuard } from '../auth/guards/user.guard';
 import { getDateKey } from '../common/date';
+import { PrismaService } from '../prisma/prisma.service';
 import { EventDto } from './dto/event.dto';
 import { EventService } from './event.service';
 
 @ApiTags('event')
 @Controller('api/event')
 export class EventController {
-  constructor(private readonly events: EventService) {}
+  constructor(
+    private readonly events: EventService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  private parseCsv(raw?: string) {
+    return (raw || '')
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+
+  private async ensureAdminBySession(sessionToken?: string) {
+    if (!sessionToken) throw new UnauthorizedException('Unauthorized');
+
+    const session = await this.prisma.authSession.findUnique({
+      where: { sessionToken },
+      select: { accountId: true, expiredAt: true },
+    });
+    if (!session || session.expiredAt.getTime() <= Date.now()) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    const allowIds = this.parseCsv(process.env['ADMIN_ACCOUNT_IDS']);
+    const allowPhones = this.parseCsv(process.env['ADMIN_ACCOUNT_PHONES']);
+    if (!allowIds.length && !allowPhones.length) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+    if (allowIds.includes(String(session.accountId))) return;
+
+    const account = await this.prisma.account.findUnique({
+      where: { id: session.accountId },
+      select: { phone: true },
+    });
+    if (account?.phone && allowPhones.includes(account.phone)) return;
+    throw new UnauthorizedException('Unauthorized');
+  }
 
   @Post()
   @ApiOperation({ summary: '记录事件' })
@@ -51,22 +88,23 @@ export class EventController {
 
   @Sse('stream')
   @ApiOperation({ summary: '事件实时流' })
-  @ApiBearerAuth('AdminPass')
-  activityStream(@Req() req: Request): Observable<MessageEvent> {
-    const adminPass = process.env['ADMIN_PASS'];
-    if (adminPass) {
-      const providedHeader = req.get('x-admin-pass');
-      const rawQuery = req.query?.['adminPass'];
-      const providedQuery =
-        typeof rawQuery === 'string'
-          ? rawQuery
-          : Array.isArray(rawQuery)
-            ? rawQuery[0]
-            : undefined;
-      if (providedHeader !== adminPass && providedQuery !== adminPass) {
-        throw new UnauthorizedException('Unauthorized');
-      }
-    }
+  @ApiBearerAuth('SessionToken')
+  async activityStream(@Req() req: Request): Promise<Observable<MessageEvent>> {
+    const rawQuery = req.query?.['sessionToken'];
+    const querySessionToken =
+      typeof rawQuery === 'string'
+        ? rawQuery
+        : Array.isArray(rawQuery)
+          ? rawQuery[0]
+          : undefined;
+    const sessionToken = (
+      req.get('x-session-token') ||
+      querySessionToken ||
+      (typeof req.cookies?.['session_token'] === 'string'
+        ? req.cookies['session_token']
+        : undefined)
+    )?.toString();
+    await this.ensureAdminBySession(sessionToken);
     return this.events.activityStream().pipe(map((data) => ({ data })));
   }
 }

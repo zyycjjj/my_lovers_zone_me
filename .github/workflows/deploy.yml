@@ -40,7 +40,8 @@ jobs:
           AI_TITLE_MODEL=${{ secrets.AI_TITLE_MODEL }}
           AI_REQUEST_TIMEOUT_MS=${{ secrets.AI_REQUEST_TIMEOUT_MS }}
           AI_MAX_TOKENS=${{ secrets.AI_MAX_TOKENS }}
-          ADMIN_PASS=${{ secrets.ADMIN_PASS }}
+          ADMIN_ACCOUNT_IDS=${{ secrets.ADMIN_ACCOUNT_IDS }}
+          ADMIN_ACCOUNT_PHONES=${{ secrets.ADMIN_ACCOUNT_PHONES }}
           UPLOAD_DIR=${{ secrets.UPLOAD_DIR }}
           PUBLIC_BASE_URL=${{ secrets.PUBLIC_BASE_URL }}
           PHOTO_MAX_MB=${{ secrets.PHOTO_MAX_MB }}
