@@ -84,11 +84,11 @@ export class TrialService {
     const preview = truncatePreview(ensureExtendedDraft(fullText, demand));
 
     return {
-      title: '这是你这轮体验预览',
+      title: '你的内容已生成',
       ...preview,
       continueHint: preview.truncated
-        ? '登录后继续查看完整内容，并进入你的工作台继续编辑。'
-        : '登录后可以把这轮内容直接接进你的工作台继续编辑。',
+        ? '完整内容已生成，解锁后即可复制使用'
+        : '已生成完整内容，可继续解锁使用',
     };
   }
 }

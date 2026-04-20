@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class TrialPreviewResponseDto {
   @ApiProperty({
-    example: '这是你这轮体验预览',
+    example: '你的内容已生成',
     description: '体验预览标题',
   })
   title!: string;
@@ -27,7 +27,7 @@ export class TrialPreviewResponseDto {
   hiddenChars!: number;
 
   @ApiProperty({
-    example: '登录后继续查看完整内容，并进入你的工作台继续编辑。',
+    example: '完整内容已生成，解锁后即可复制使用',
     description: '前端可直接展示的继续引导文案',
   })
   continueHint!: string;
