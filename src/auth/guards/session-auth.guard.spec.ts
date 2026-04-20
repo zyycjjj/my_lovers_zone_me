@@ -14,10 +14,7 @@ describe('SessionAuthGuard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    guard = new SessionAuthGuard(
-      sessions as never,
-      workspaceMembers as never,
-    );
+    guard = new SessionAuthGuard(sessions as never, workspaceMembers as never);
   });
 
   const createContext = (req: Record<string, unknown>) =>
@@ -29,7 +26,8 @@ describe('SessionAuthGuard', () => {
 
   it('在 session 有效时写入请求上下文', async () => {
     const req = {
-      header: (name: string) => (name === 'x-session-token' ? 'session_ok' : undefined),
+      header: (name: string) =>
+        name === 'x-session-token' ? 'session_ok' : undefined,
       cookies: {},
     };
     sessions.findBySessionToken.mockResolvedValue({

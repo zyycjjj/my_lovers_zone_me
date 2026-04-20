@@ -14,9 +14,7 @@ describe('TrialService', () => {
   });
 
   it('体验预览应返回截断后的内容与继续提示', async () => {
-    ai.chatText.mockResolvedValue(
-      '这是一段足够长的体验预览内容。'.repeat(24),
-    );
+    ai.chatText.mockResolvedValue('这是一段足够长的体验预览内容。'.repeat(24));
 
     const result = await service.preview({
       prompt: '帮我写一段春季新品上新的小红书文案',
@@ -30,7 +28,9 @@ describe('TrialService', () => {
   });
 
   it('AI 不可用时也应回退到可截断的体验预览', async () => {
-    ai.chatText.mockRejectedValue(new ServiceUnavailableException('ai offline'));
+    ai.chatText.mockRejectedValue(
+      new ServiceUnavailableException('ai offline'),
+    );
 
     const result = await service.preview({
       prompt: '帮我写一段产品体验分享',

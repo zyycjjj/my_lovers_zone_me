@@ -37,7 +37,9 @@ export class SessionAuthGuard implements CanActivate {
     }
 
     await this.sessions.touch(session.id);
-    const members = await this.workspaceMembers.findByAccountId(session.accountId);
+    const members = await this.workspaceMembers.findByAccountId(
+      session.accountId,
+    );
 
     req.sessionToken = sessionToken;
     req.accountId = session.accountId;

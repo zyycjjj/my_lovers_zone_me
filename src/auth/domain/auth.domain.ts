@@ -13,8 +13,15 @@ import { PasswordLoginDto } from '../dto/request/password-login.dto';
 import { PasswordRegisterDto } from '../dto/request/password-register.dto';
 import { RefreshSessionDto } from '../dto/request/refresh-session.dto';
 import { LogoutDto } from '../dto/request/logout.dto';
-import { AccountRepository, AuthIdentityRepository, DbClient } from '../repositories/auth.repository';
-import { AuthSessionRepository, SessionAccountRepository } from '../repositories/session.repository';
+import {
+  AccountRepository,
+  AuthIdentityRepository,
+  DbClient,
+} from '../repositories/auth.repository';
+import {
+  AuthSessionRepository,
+  SessionAccountRepository,
+} from '../repositories/session.repository';
 import { WorkspaceRepository } from '../../workspace/repositories/workspace.repository';
 import { WorkspaceMemberRepository } from '../../workspace/repositories/workspace-member.repository';
 import { UserProfileRepository } from '../../onboarding/repositories/user-profile.repository';
@@ -63,7 +70,11 @@ export class AuthDomain {
     }
 
     const phone = payload.phone?.trim() || '13900000000';
-    const result = await this.loginWithPhone(phone, 'sms_code', payload.displayName?.trim());
+    const result = await this.loginWithPhone(
+      phone,
+      'sms_code',
+      payload.displayName?.trim(),
+    );
 
     return this.toLoginResponse(result);
   }
@@ -82,7 +93,9 @@ export class AuthDomain {
           throw new BadRequestException('该手机号已完成注册，可直接登录');
         }
 
-        const { passwordHash, passwordSalt } = this.hashPassword(payload.password);
+        const { passwordHash, passwordSalt } = this.hashPassword(
+          payload.password,
+        );
         const account = existing
           ? await this.accounts.updatePasswordCredential(
               existing.id,
@@ -125,7 +138,13 @@ export class AuthDomain {
     if (account.status !== 'active') {
       throw new ForbiddenException('当前账号不可用');
     }
-    if (!this.verifyPassword(payload.password, account.passwordSalt, account.passwordHash)) {
+    if (
+      !this.verifyPassword(
+        payload.password,
+        account.passwordSalt,
+        account.passwordHash,
+      )
+    ) {
       throw new UnauthorizedException('手机号或密码错误');
     }
 
@@ -212,7 +231,9 @@ export class AuthDomain {
 
     await this.sessions.touch(session.id);
 
-    const members = await this.workspaceMembers.findByAccountId(session.accountId);
+    const members = await this.workspaceMembers.findByAccountId(
+      session.accountId,
+    );
     const profile = await this.profiles.findByAccountId(session.accountId);
     const currentMember = members[0];
     const currentWorkspace = currentMember
@@ -271,7 +292,10 @@ export class AuthDomain {
   }
 
   private async createAccessBundle(account: Account, tx: DbClient) {
-    let workspace = await this.workspaces.findPersonalOwnedByAccountId(account.id, tx);
+    let workspace = await this.workspaces.findPersonalOwnedByAccountId(
+      account.id,
+      tx,
+    );
     if (!workspace) {
       workspace = await this.workspaces.createPersonalWorkspace(
         account.id,
@@ -307,7 +331,9 @@ export class AuthDomain {
   private toLoginResponse(result: {
     account: Account;
     session: Awaited<ReturnType<AuthSessionRepository['create']>>;
-    workspace: Awaited<ReturnType<WorkspaceRepository['createPersonalWorkspace']>>;
+    workspace: Awaited<
+      ReturnType<WorkspaceRepository['createPersonalWorkspace']>
+    >;
     profile: Awaited<ReturnType<UserProfileRepository['findByAccountId']>>;
     workspaceCount: number;
   }) {
@@ -347,7 +373,10 @@ export class AuthDomain {
     }
   }
 
-  private hashPassword(password: string, salt = randomBytes(16).toString('hex')) {
+  private hashPassword(
+    password: string,
+    salt = randomBytes(16).toString('hex'),
+  ) {
     return {
       passwordSalt: salt,
       passwordHash: scryptSync(password, salt, 64).toString('hex'),

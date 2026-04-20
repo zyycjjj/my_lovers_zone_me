@@ -15,7 +15,9 @@ export class AccountRepository {
   }
 
   findByPhone(phone: string, tx?: DbClient) {
-    return pickDbClient(this.prisma, tx).account.findUnique({ where: { phone } });
+    return pickDbClient(this.prisma, tx).account.findUnique({
+      where: { phone },
+    });
   }
 
   createByPhone(phone: string, tx?: DbClient) {

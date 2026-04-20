@@ -13,10 +13,7 @@ describe('WorkspaceDomain', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    domain = new WorkspaceDomain(
-      sessions as never,
-      workspaceMembers as never,
-    );
+    domain = new WorkspaceDomain(sessions as never, workspaceMembers as never);
   });
 
   it('返回当前工作空间摘要', async () => {

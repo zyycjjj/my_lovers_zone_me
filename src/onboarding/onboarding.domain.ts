@@ -1,5 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AccountRepository, DbClient } from '../auth/repositories/auth.repository';
+import {
+  AccountRepository,
+  DbClient,
+} from '../auth/repositories/auth.repository';
 import { AuthSessionRepository } from '../auth/repositories/session.repository';
 import { WorkspaceMemberRepository } from '../workspace/repositories/workspace-member.repository';
 import { UpsertOnboardingProfileDto } from './dto/upsert-onboarding-profile.dto';
@@ -34,7 +37,10 @@ export class OnboardingDomain {
     };
   }
 
-  async upsertProfile(sessionToken: string, payload: UpsertOnboardingProfileDto) {
+  async upsertProfile(
+    sessionToken: string,
+    payload: UpsertOnboardingProfileDto,
+  ) {
     const context = await this.requireContext(sessionToken);
     const completedAt = new Date();
 
@@ -82,7 +88,8 @@ export class OnboardingDomain {
         contentDirection: profile.contentDirection,
         targetPlatform: profile.targetPlatform,
         experienceLevel: profile.experienceLevel,
-        onboardingCompletedAt: profile.onboardingCompletedAt?.toISOString() || null,
+        onboardingCompletedAt:
+          profile.onboardingCompletedAt?.toISOString() || null,
       },
       routing: toRoutingResult({
         profile,

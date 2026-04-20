@@ -3,8 +3,14 @@ import { AuthController } from './auth.controller';
 import { AuthCaptchaService } from './domain/auth-captcha.service';
 import { AliyunNumberAuthClient } from './domain/aliyun-number-auth.client';
 import { AuthDomain } from './domain/auth.domain';
-import { AccountRepository, AuthIdentityRepository } from './repositories/auth.repository';
-import { AuthSessionRepository, SessionAccountRepository } from './repositories/session.repository';
+import {
+  AccountRepository,
+  AuthIdentityRepository,
+} from './repositories/auth.repository';
+import {
+  AuthSessionRepository,
+  SessionAccountRepository,
+} from './repositories/session.repository';
 import { AuthService } from './auth.service';
 import { SessionAuthGuard } from './guards/session-auth.guard';
 import { UserGuard } from './guards/user.guard';

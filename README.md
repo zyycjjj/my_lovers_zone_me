@@ -40,6 +40,7 @@ DATABASE_URL="mysql://USER:PASSWORD@hk-cdb-blgeg3yh.sql.tencentcdb.com:21348/lov
 PORT=4000
 APP_TIMEZONE="Asia/Shanghai"
 AI_BASE_URL="https://api.openai.com"
+AI_CHAT_COMPLETIONS_URL=""
 AI_API_KEY="YOUR_KEY"
 AI_MODEL="gpt-4o-mini"
 ADMIN_PASS="CHANGE_ME"
@@ -113,6 +114,7 @@ Add GitHub Actions secrets:
 - PORT
 - APP_TIMEZONE
 - AI_BASE_URL
+- AI_CHAT_COMPLETIONS_URL
 - AI_API_KEY
 - AI_MODEL
 - ADMIN_PASS

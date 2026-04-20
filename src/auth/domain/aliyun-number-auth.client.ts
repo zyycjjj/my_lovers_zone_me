@@ -101,7 +101,9 @@ export class AliyunNumberAuthClient {
     const response = await fetch(url, { method: 'GET' });
 
     if (!response.ok) {
-      throw new BadGatewayException(`阿里云号码认证请求失败: ${response.status}`);
+      throw new BadGatewayException(
+        `阿里云号码认证请求失败: ${response.status}`,
+      );
     }
 
     return (await response.json()) as T;

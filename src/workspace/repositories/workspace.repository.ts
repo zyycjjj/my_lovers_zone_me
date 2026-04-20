@@ -9,7 +9,9 @@ export class WorkspaceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   findById(id: number, tx?: DbClient) {
-    return pickDbClient(this.prisma, tx).workspace.findUnique({ where: { id } });
+    return pickDbClient(this.prisma, tx).workspace.findUnique({
+      where: { id },
+    });
   }
 
   findOwnedByAccountId(accountId: number, tx?: DbClient) {

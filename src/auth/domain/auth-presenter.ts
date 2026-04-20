@@ -13,10 +13,7 @@ export const toSessionDto = (session: AuthSession) => ({
   expiredAt: session.expiredAt.toISOString(),
 });
 
-export const toWorkspaceSummary = (
-  workspace: Workspace,
-  role: string,
-) => ({
+export const toWorkspaceSummary = (workspace: Workspace, role: string) => ({
   id: workspace.id,
   name: workspace.name,
   type: workspace.type,

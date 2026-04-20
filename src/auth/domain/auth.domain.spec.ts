@@ -53,7 +53,9 @@ describe('AuthDomain', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    prisma.$transaction.mockImplementation(async (handler: Function) => handler({}));
+    prisma.$transaction.mockImplementation(async (handler: Function) =>
+      handler({}),
+    );
     domain = new AuthDomain(
       prisma as never,
       aliyun as never,

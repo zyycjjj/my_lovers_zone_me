@@ -22,7 +22,9 @@ function truncatePreview(text: string, limit = 168) {
     slice.lastIndexOf('？'),
     slice.lastIndexOf('\n'),
   );
-  const preview = (cutAt >= Math.floor(limit * 0.6) ? slice.slice(0, cutAt + 1) : slice).trim();
+  const preview = (
+    cutAt >= Math.floor(limit * 0.6) ? slice.slice(0, cutAt + 1) : slice
+  ).trim();
 
   return {
     previewText: `${preview}\n\n......`,

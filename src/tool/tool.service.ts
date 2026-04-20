@@ -59,6 +59,14 @@ export class ToolService {
     private readonly events: EventService,
   ) {}
 
+  private async incrementToolUsedSafely(userId: number, toolKey: string) {
+    try {
+      await this.events.incrementToolUsed(userId, toolKey, getDateKey());
+    } catch {
+      // 埋点失败不应影响主流程
+    }
+  }
+
   async generateScript(
     userId: number,
     input: {
@@ -121,7 +129,7 @@ export class ToolService {
         throw error;
       }
     }
-    await this.events.incrementToolUsed(userId, 'script', getDateKey());
+    await this.incrementToolUsedSafely(userId, 'script');
     return { text };
   }
 
@@ -157,7 +165,7 @@ export class ToolService {
           `想要${base}的看这里`,
           `${base}真实测评，别盲买`,
         ];
-        await this.events.incrementToolUsed(userId, 'title', getDateKey());
+        await this.incrementToolUsedSafely(userId, 'title');
         return { titles };
       }
       throw error;
@@ -173,7 +181,7 @@ export class ToolService {
           .filter(Boolean)
           .slice(0, 20);
 
-    await this.events.incrementToolUsed(userId, 'title', getDateKey());
+    await this.incrementToolUsedSafely(userId, 'title');
     return { titles };
   }
 
@@ -198,7 +206,7 @@ export class ToolService {
     } catch (error) {
       if (error instanceof ServiceUnavailableException) {
         const summaryLine = input.text.slice(0, 30);
-        await this.events.incrementToolUsed(userId, 'refine', getDateKey());
+        await this.incrementToolUsedSafely(userId, 'refine');
         return {
           summaryLine,
           sellingPoints: input.text
@@ -242,7 +250,7 @@ export class ToolService {
           .slice(0, 5)
       : [];
 
-    await this.events.incrementToolUsed(userId, 'refine', getDateKey());
+    await this.incrementToolUsedSafely(userId, 'refine');
     return {
       summaryLine: parsed?.summaryLine ?? '',
       sellingPoints,
@@ -266,7 +274,7 @@ export class ToolService {
 
     const sellingPoint = `按当前佣金比例，每单预估约 ${Math.round(commission * 100) / 100} 元佣金。`;
 
-    await this.events.incrementToolUsed(userId, 'commission', getDateKey());
+    await this.incrementToolUsedSafely(userId, 'commission');
     return {
       commission: Math.round(commission * 100) / 100,
       comparisons,

@@ -30,7 +30,9 @@ export class WorkspaceDomain {
     if (!session || session.expiredAt.getTime() <= Date.now()) {
       throw new UnauthorizedException('登录会话无效');
     }
-    const members = await this.workspaceMembers.findByAccountId(session.accountId);
+    const members = await this.workspaceMembers.findByAccountId(
+      session.accountId,
+    );
     if (!members.length) {
       throw new UnauthorizedException('当前账号未绑定工作空间');
     }

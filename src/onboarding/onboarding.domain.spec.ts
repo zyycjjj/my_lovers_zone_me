@@ -93,7 +93,11 @@ describe('OnboardingDomain', () => {
       experienceLevel: 'beginner',
     });
 
-    expect(accounts.updateDisplayName).toHaveBeenCalledWith(1, '小杨', expect.any(Object));
+    expect(accounts.updateDisplayName).toHaveBeenCalledWith(
+      1,
+      '小杨',
+      expect.any(Object),
+    );
     expect(result.profile.nickname).toBe('小杨');
     expect(result.profile.businessRole).toBe('个体商家');
     expect(result.profile.currentGoal).toBe('先稳定每天发一条');

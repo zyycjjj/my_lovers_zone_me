@@ -16,8 +16,9 @@ export class AuthCaptchaService {
   createCaptcha() {
     this.cleanup();
 
-    const text = Array.from({ length: 4 }, () =>
-      CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)],
+    const text = Array.from(
+      { length: 4 },
+      () => CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)],
     ).join('');
     const captchaId = randomBytes(12).toString('hex');
     const expiredAt = Date.now() + CAPTCHA_TTL_MS;
