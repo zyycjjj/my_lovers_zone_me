@@ -37,6 +37,9 @@ jobs:
           AI_CHAT_COMPLETIONS_URL=${{ secrets.AI_CHAT_COMPLETIONS_URL }}
           AI_API_KEY=${{ secrets.AI_API_KEY }}
           AI_MODEL=${{ secrets.AI_MODEL }}
+          AI_TITLE_MODEL=${{ secrets.AI_TITLE_MODEL }}
+          AI_REQUEST_TIMEOUT_MS=${{ secrets.AI_REQUEST_TIMEOUT_MS }}
+          AI_MAX_TOKENS=${{ secrets.AI_MAX_TOKENS }}
           ADMIN_PASS=${{ secrets.ADMIN_PASS }}
           UPLOAD_DIR=${{ secrets.UPLOAD_DIR }}
           PUBLIC_BASE_URL=${{ secrets.PUBLIC_BASE_URL }}

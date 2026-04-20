@@ -59,6 +59,10 @@ export class ToolService {
     private readonly events: EventService,
   ) {}
 
+  private get titleFastModel() {
+    return process.env['AI_TITLE_MODEL']?.trim() || undefined;
+  }
+
   private async incrementToolUsedSafely(userId: number, toolKey: string) {
     try {
       await this.events.incrementToolUsed(userId, toolKey, getDateKey());
@@ -149,7 +153,12 @@ export class ToolService {
 
     let raw = '';
     try {
-      raw = await this.ai.chatText({ user: prompt });
+      raw = await this.ai.chatText({
+        user: prompt,
+        model: this.titleFastModel,
+        timeoutMs: 15000,
+        maxTokens: 800,
+      });
     } catch (error) {
       if (error instanceof ServiceUnavailableException) {
         const base = input.keyword.trim() || '好物';
@@ -170,16 +179,33 @@ export class ToolService {
       }
       throw error;
     }
-    const parsed = tryParseJson<string[]>(extractJson(raw));
-    const titles = Array.isArray(parsed)
+    const baseKeyword = input.keyword.trim() || '好物';
+    const extracted = extractJson(raw || '');
+    const parsed = tryParseJson<string[]>(extracted);
+    let titles = Array.isArray(parsed)
       ? parsed
           .filter((t) => typeof t === 'string' && t.trim().length)
           .slice(0, 20)
       : raw
           .split('\n')
-          .map((l) => l.replace(/^\s*[-\d.、]+/, '').trim())
+          .map((l) => l.replace(/^\s*[-\d.、【】\[\]()().]+/, '').trim())
           .filter(Boolean)
           .slice(0, 20);
+
+    if (!titles.length) {
+      titles = [
+        `${baseKeyword}真的绝了，开箱就爱上`,
+        `${baseKeyword}的隐藏用法，越用越香`,
+        `${baseKeyword}上手体验：这次没踩雷`,
+        `${baseKeyword}值不值？我给你答案`,
+        `${baseKeyword}适合谁？看完就懂`,
+        `${baseKeyword}的细节太加分了`,
+        `${baseKeyword}性价比拉满的选择`,
+        `${baseKeyword}体验感拉满的一天`,
+        `想要${baseKeyword}的看这里`,
+        `${baseKeyword}真实测评，别盲买`,
+      ];
+    }
 
     await this.incrementToolUsedSafely(userId, 'title');
     return { titles };

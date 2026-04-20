@@ -55,10 +55,18 @@ export class AiService {
     return `${this.baseUrl}/v1/chat/completions`;
   }
 
-  async chatText(params: { system?: string; user: string }) {
+  async chatText(params: {
+    system?: string;
+    user: string;
+    model?: string;
+    timeoutMs?: number;
+    maxTokens?: number;
+  }) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+      const timeoutMs =
+        params.timeoutMs && params.timeoutMs > 0 ? params.timeoutMs : this.timeoutMs;
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
       const res = await (async () => {
         try {
           return await fetch(this.chatCompletionsUrl, {
@@ -69,7 +77,7 @@ export class AiService {
             },
             signal: controller.signal,
             body: JSON.stringify({
-              model: this.model,
+              model: params.model || this.model,
               messages: [
                 ...(params.system
                   ? [{ role: 'system', content: params.system }]
@@ -77,7 +85,10 @@ export class AiService {
                 { role: 'user', content: params.user },
               ],
               temperature: 0.7,
-              max_tokens: this.maxTokens,
+              max_tokens:
+                params.maxTokens && params.maxTokens > 0
+                  ? params.maxTokens
+                  : this.maxTokens,
             }),
           });
         } finally {
