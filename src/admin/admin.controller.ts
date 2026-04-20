@@ -11,6 +11,12 @@ import { AdminService } from './admin.service';
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
+  @Get('admin-check')
+  @ApiOperation({ summary: '管理员权限校验' })
+  adminCheck() {
+    return { ok: true };
+  }
+
   @Get('summary')
   @ApiOperation({ summary: '后台汇总' })
   async summary() {
