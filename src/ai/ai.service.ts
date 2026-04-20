@@ -6,6 +6,18 @@ type ChatCompletionResponse = {
 
 @Injectable()
 export class AiService {
+  private get timeoutMs() {
+    const raw = Number(process.env['AI_REQUEST_TIMEOUT_MS'] || 20000);
+    if (!Number.isFinite(raw) || raw <= 0) return 20000;
+    return raw;
+  }
+
+  private get maxTokens() {
+    const raw = Number(process.env['AI_MAX_TOKENS'] || 1200);
+    if (!Number.isFinite(raw) || raw <= 0) return 1200;
+    return raw;
+  }
+
   private get chatCompletionsUrlOverride() {
     return process.env['AI_CHAT_COMPLETIONS_URL']?.trim();
   }
@@ -45,23 +57,33 @@ export class AiService {
 
   async chatText(params: { system?: string; user: string }) {
     try {
-      const res = await fetch(this.chatCompletionsUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: this.model,
-          messages: [
-            ...(params.system
-              ? [{ role: 'system', content: params.system }]
-              : []),
-            { role: 'user', content: params.user },
-          ],
-          temperature: 0.7,
-        }),
-      });
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+      const res = await (async () => {
+        try {
+          return await fetch(this.chatCompletionsUrl, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+              model: this.model,
+              messages: [
+                ...(params.system
+                  ? [{ role: 'system', content: params.system }]
+                  : []),
+                { role: 'user', content: params.user },
+              ],
+              temperature: 0.7,
+              max_tokens: this.maxTokens,
+            }),
+          });
+        } finally {
+          clearTimeout(timer);
+        }
+      })();
 
       if (!res.ok) {
         const text = await res.text().catch(() => '');
@@ -74,6 +96,9 @@ export class AiService {
       return data.choices?.[0]?.message?.content?.trim() ?? '';
     } catch (error) {
       if (error instanceof ServiceUnavailableException) throw error;
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new ServiceUnavailableException('AI request timeout');
+      }
       throw new ServiceUnavailableException('AI request failed');
     }
   }
