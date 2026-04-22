@@ -4,13 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { PlansService, type PlanKey } from '../plans/plans.service';
 import { PrismaService } from '../prisma/prisma.service';
-
-const PLAN_PRICE_FEN: Record<'experience' | 'pro' | 'team', number> = {
-  experience: 100,
-  pro: 9900,
-  team: 29900,
-};
 
 function buildOrderNo() {
   const now = Date.now().toString();
@@ -22,7 +17,10 @@ function buildOrderNo() {
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly plans: PlansService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   // 部分环境下 Prisma Client 类型更新有延迟，这里用窄范围兼容避免阻塞开发。
   private get db() {
@@ -60,10 +58,10 @@ export class PaymentsService {
   async createOrder(input: {
     userId: number;
     accountId?: number;
-    planKey: 'experience' | 'pro' | 'team';
+    planKey: PlanKey;
   }) {
-    const amountFen = PLAN_PRICE_FEN[input.planKey];
-    if (!amountFen) throw new BadRequestException('Invalid plan key');
+    const plan = await this.plans.getPlan(input.planKey);
+    if (!plan) throw new BadRequestException('Invalid plan key');
 
     return this.db.paymentOrder.create({
       data: {
@@ -71,9 +69,21 @@ export class PaymentsService {
         userId: input.userId,
         accountId: input.accountId,
         planKey: input.planKey,
-        amountFen,
+        amountFen: plan.priceFen,
       },
     });
+  }
+
+  getPublicPlanConfig() {
+    return this.plans.getEnabledPlans();
+  }
+
+  getAdminPlanConfig() {
+    return this.plans.getPlanConfig();
+  }
+
+  savePlanConfig(input: { plans?: unknown }) {
+    return this.plans.savePlanConfig(input);
   }
 
   async getPublicPaymentConfig() {
@@ -228,9 +238,14 @@ export class PaymentsService {
     }
 
     const now = new Date();
-    const expiredAt = new Date(now.getTime());
-    const plusDays = order.planKey === 'experience' ? 7 : 30;
-    expiredAt.setDate(expiredAt.getDate() + plusDays);
+    const plan = await this.plans.getPlan(order.planKey as PlanKey);
+    if (!plan) throw new BadRequestException('Plan is disabled');
+
+    const durationDays = plan.durationDays;
+    const expiredAt = durationDays == null ? null : new Date(now.getTime());
+    if (expiredAt && durationDays != null) {
+      expiredAt.setDate(expiredAt.getDate() + durationDays);
+    }
 
     const result = await this.prisma.$transaction(async (tx) => {
       const updatedOrder = await (tx as any).paymentOrder.update({

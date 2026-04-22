@@ -1,7 +1,17 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  UseFilters,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { UserGuard } from '../auth/guards/user.guard';
+import { ApiExceptionFilter } from '../common/api-exception.filter';
+import { ApiResponseInterceptor } from '../common/api-response.interceptor';
 import { CommissionDto } from './dto/commission.dto';
 import { GenerateScriptDto } from './dto/generate-script.dto';
 import { GenerateTitleDto } from './dto/generate-title.dto';
@@ -12,25 +22,27 @@ import { ToolService } from './tool.service';
 @ApiBearerAuth('UserToken')
 @Controller('api/tool')
 @UseGuards(UserGuard)
+@UseFilters(ApiExceptionFilter)
+@UseInterceptors(ApiResponseInterceptor)
 export class ToolController {
   constructor(private readonly tools: ToolService) {}
 
   @Post('script')
   @ApiOperation({ summary: '生成带货脚本' })
   async script(@Req() req: Request, @Body() body: GenerateScriptDto) {
-    return this.tools.generateScript(req.userId!, body);
+    return this.tools.generateScript(req.userId!, req.accountId, body);
   }
 
   @Post('title')
   @ApiOperation({ summary: '生成标题' })
   async title(@Req() req: Request, @Body() body: GenerateTitleDto) {
-    return this.tools.generateTitle(req.userId!, body);
+    return this.tools.generateTitle(req.userId!, req.accountId, body);
   }
 
   @Post('refine')
   @ApiOperation({ summary: '话术提炼与合规检查' })
   async refine(@Req() req: Request, @Body() body: RefineTalkDto) {
-    return this.tools.refineTalk(req.userId!, body);
+    return this.tools.refineTalk(req.userId!, req.accountId, body);
   }
 
   @Post('commission')

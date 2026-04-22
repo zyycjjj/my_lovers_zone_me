@@ -109,4 +109,16 @@ export class AdminController {
   ) {
     return this.admin.savePaymentConfig(body);
   }
+
+  @Get('plan-config')
+  @ApiOperation({ summary: '套餐配置' })
+  planConfig() {
+    return this.admin.planConfig();
+  }
+
+  @Post('plan-config')
+  @ApiOperation({ summary: '保存套餐配置' })
+  savePlanConfig(@Body() body: { plans?: unknown }) {
+    return this.admin.savePlanConfig(body);
+  }
 }

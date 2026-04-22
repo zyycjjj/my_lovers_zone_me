@@ -1,6 +1,7 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { AiService } from '../ai/ai.service';
 import { getDateKey } from '../common/date';
+import { EntitlementsService } from '../entitlements/entitlements.service';
 import { EventService } from '../event/event.service';
 
 function tryParseJson<T>(text: string): T | null {
@@ -56,6 +57,7 @@ function detectRisks(text: string) {
 export class ToolService {
   constructor(
     private readonly ai: AiService,
+    private readonly entitlements: EntitlementsService,
     private readonly events: EventService,
   ) {}
 
@@ -73,6 +75,7 @@ export class ToolService {
 
   async generateScript(
     userId: number,
+    accountId: number | undefined,
     input: {
       keyword: string;
       price?: number;
@@ -81,6 +84,12 @@ export class ToolService {
       style?: 'short' | 'live';
     },
   ) {
+    await this.entitlements.assertCanUseTool({
+      userId,
+      accountId,
+      toolKey: 'script',
+    });
+
     const styleLabel = input.style === 'live' ? '直播口播' : '短视频种草';
     const prompt = [
       `你是资深抖音带货编导。请为商品生成${styleLabel}脚本，面向真实转化。`,
@@ -139,8 +148,15 @@ export class ToolService {
 
   async generateTitle(
     userId: number,
+    accountId: number | undefined,
     input: { keyword: string; style?: string },
   ) {
+    await this.entitlements.assertCanUseTool({
+      userId,
+      accountId,
+      toolKey: 'title',
+    });
+
     const prompt = [
       `你是抖音带货标题策划。请生成20条爆款标题，尽量口语化、短、自然。`,
       `要求返回JSON数组，数组元素是字符串标题，不要任何额外文字。`,
@@ -211,7 +227,17 @@ export class ToolService {
     return { titles };
   }
 
-  async refineTalk(userId: number, input: { text: string }) {
+  async refineTalk(
+    userId: number,
+    accountId: number | undefined,
+    input: { text: string },
+  ) {
+    await this.entitlements.assertCanUseTool({
+      userId,
+      accountId,
+      toolKey: 'refine',
+    });
+
     const risks = detectRisks(input.text);
     const prompt = [
       `你是直播话术合规与提炼助手。对输入话术做提炼与合规提醒。`,

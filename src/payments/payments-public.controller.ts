@@ -12,4 +12,10 @@ export class PaymentsPublicController {
   publicConfig() {
     return this.payments.getPublicPaymentConfig();
   }
+
+  @Get('plans/public')
+  @ApiOperation({ summary: '公开套餐配置' })
+  publicPlans() {
+    return this.payments.getPublicPlanConfig();
+  }
 }

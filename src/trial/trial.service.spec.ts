@@ -20,11 +20,11 @@ describe('TrialService', () => {
       prompt: '帮我写一段春季新品上新的小红书文案',
     });
 
-    expect(result.title).toBe('这是你这轮体验预览');
+    expect(result.title).toBe('你的内容已生成');
     expect(result.truncated).toBe(true);
     expect(result.hiddenChars).toBeGreaterThan(0);
     expect(result.previewText).toContain('......');
-    expect(result.continueHint).toContain('登录后继续查看完整内容');
+    expect(result.continueHint).toContain('解锁后即可复制使用');
   });
 
   it('AI 不可用时也应回退到可截断的体验预览', async () => {

@@ -13,31 +13,44 @@ export class AdminService {
 
   async summary() {
     const date = getDateKey();
-    const [events, latestSignal, echoes, photos] = await Promise.all([
-      this.prisma.event.findMany({
-        where: { date },
-        orderBy: { updatedAt: 'desc' },
-      }),
-      this.prisma.signal.findFirst({
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.echo.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      }),
-      this.prisma.photo.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      }),
-    ]);
+    try {
+      const [events, latestSignal, echoes, photos] = await Promise.all([
+        this.prisma.event.findMany({
+          where: { date },
+          orderBy: { updatedAt: 'desc' },
+        }),
+        this.prisma.signal.findFirst({
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.echo.findMany({
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        }),
+        this.prisma.photo.findMany({
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        }),
+      ]);
 
-    return {
-      date,
-      events,
-      latestSignal,
-      echoes,
-      photos,
-    };
+      return {
+        date,
+        events,
+        latestSignal,
+        echoes,
+        photos,
+      };
+    } catch (error) {
+      // 避免后台汇总接口直接 500，先记录错误并返回空数据，方便线上使用
+      // eslint-disable-next-line no-console
+      console.error('Admin summary error', error);
+      return {
+        date,
+        events: [],
+        latestSignal: null,
+        echoes: [],
+        photos: [],
+      };
+    }
   }
 
   async photos(limit = 20) {
@@ -125,5 +138,13 @@ export class AdminService {
     contactText?: string;
   }) {
     return this.payments.savePaymentConfig(input);
+  }
+
+  async planConfig() {
+    return this.payments.getAdminPlanConfig();
+  }
+
+  async savePlanConfig(input: { plans?: unknown }) {
+    return this.payments.savePlanConfig(input);
   }
 }

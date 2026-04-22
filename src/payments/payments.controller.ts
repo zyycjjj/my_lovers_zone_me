@@ -6,11 +6,16 @@ import {
   ParseIntPipe,
   Post,
   Req,
+  UseFilters,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { UserGuard } from '../auth/guards/user.guard';
+import { ApiExceptionFilter } from '../common/api-exception.filter';
+import { ApiResponseInterceptor } from '../common/api-response.interceptor';
+import { EntitlementsService } from '../entitlements/entitlements.service';
 import { CreatePaymentOrderDto } from './dto/create-payment-order.dto';
 import { SubmitPaymentProofDto } from './dto/submit-payment-proof.dto';
 import { PaymentsService } from './payments.service';
@@ -19,8 +24,13 @@ import { PaymentsService } from './payments.service';
 @ApiBearerAuth('UserToken')
 @Controller('api/payments')
 @UseGuards(UserGuard)
+@UseFilters(ApiExceptionFilter)
+@UseInterceptors(ApiResponseInterceptor)
 export class PaymentsController {
-  constructor(private readonly payments: PaymentsService) {}
+  constructor(
+    private readonly payments: PaymentsService,
+    private readonly entitlements: EntitlementsService,
+  ) {}
 
   @Post('orders')
   @ApiOperation({ summary: '创建支付订单' })
@@ -63,6 +73,15 @@ export class PaymentsController {
   @ApiOperation({ summary: '我的待处理订单统计' })
   myPending(@Req() req: Request) {
     return this.payments.getMyPendingSummary({
+      userId: req.userId!,
+      accountId: req.accountId,
+    });
+  }
+
+  @Get('entitlement/me')
+  @ApiOperation({ summary: '我的套餐权益与额度' })
+  myEntitlement(@Req() req: Request) {
+    return this.entitlements.getStatus({
       userId: req.userId!,
       accountId: req.accountId,
     });
