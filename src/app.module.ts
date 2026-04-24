@@ -17,6 +17,7 @@ import { AdminModule } from './admin/admin.module';
 import { WorkspaceModule } from './workspace/workspace.module';
 import { TrialModule } from './trial/trial.module';
 import { PaymentsModule } from './payments/payments.module';
+import { ContentAssetsModule } from './content-assets/content-assets.module';
 import { AppController } from './app.controller';
 
 const requestLogger = (req: Request, res: Response, next: () => void) => {
@@ -50,6 +51,7 @@ const requestLogger = (req: Request, res: Response, next: () => void) => {
     WorkspaceModule,
     TrialModule,
     PaymentsModule,
+    ContentAssetsModule,
   ],
   controllers: [AppController],
 })
