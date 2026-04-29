@@ -1,5 +1,5 @@
 export function getDateKey(now = new Date()) {
-  const timeZone = process.env['APP_TIMEZONE'] ?? 'Asia/Shanghai';
+  const timeZone = process.env['APP_TIMEZONE'] || 'Asia/Shanghai';
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone,
     year: 'numeric',
