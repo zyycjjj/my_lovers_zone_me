@@ -107,4 +107,32 @@ export class EventController {
     await this.ensureAdminBySession(sessionToken);
     return this.events.activityStream().pipe(map((data) => ({ data })));
   }
+
+  @Get('stats/me')
+  @ApiOperation({ summary: '获取我的行为统计' })
+  @ApiBearerAuth('UserToken')
+  @UseGuards(UserGuard)
+  async getMyStats(
+    @Req() req: Request,
+    @Query('days') days?: string,
+  ) {
+    return this.events.getUserBehaviorStats(
+      req.userId!,
+      days ? parseInt(days, 10) : 30,
+    );
+  }
+
+  @Get('trend/me')
+  @ApiOperation({ summary: '获取每日活跃趋势' })
+  @ApiBearerAuth('UserToken')
+  @UseGuards(UserGuard)
+  async getMyTrend(
+    @Req() req: Request,
+    @Query('days') days?: string,
+  ) {
+    return this.events.getDailyTrend(
+      req.userId!,
+      days ? parseInt(days, 10) : 7,
+    );
+  }
 }

@@ -196,6 +196,8 @@ model User {
   photos        Photo[]
   paymentOrders PaymentOrder[]
   contentAssets ContentAsset[]
+  contentPlans  ContentPlan[]
+  quotaUsages   QuotaUsage[]
 
   @@index([role])
 }
@@ -263,9 +265,10 @@ model ContentAsset {
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  account   Account?   @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account   Account?           @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  workspace Workspace?         @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  tasks     ContentPlanTask[]
 
   @@index([userId, createdAt])
   @@index([accountId, createdAt])
@@ -328,4 +331,64 @@ model Photo {
   signal Signal? @relation(fields: [signalId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+}
+
+model ContentPlan {
+  id          Int                   @id @default(autoincrement())
+  userId      Int
+  title       String                @db.VarChar(128)
+  description String?               @db.VarChar(512)
+  type        String                @default("weekly") @db.VarChar(32)
+  status      String                @default("active") @db.VarChar(16)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  user  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks ContentPlanTask[]
+
+  @@index([userId, status, createdAt])
+  @@index([userId, type])
+}
+
+model ContentPlanTask {
+  id            Int                   @id @default(autoincrement())
+  planId        Int
+  dayNumber     Int
+  title         String                @db.VarChar(128)
+  description   String?               @db.VarChar(512)
+  hint          String?               @db.VarChar(256)
+  toolKey       String?               @db.VarChar(32)
+  status        String                @default("pending") @db.VarChar(16)
+  completedAt   DateTime?
+  assetId       Int?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  plan  ContentPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  asset ContentAsset? @relation(fields: [assetId], references: [id], onDelete: SetNull)
+
+  @@unique([planId, dayNumber])
+  @@index([planId, status])
+}
+
+model QuotaUsage {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  accountId    Int?
+  planKey      String   @db.VarChar(32)
+  quotaKey     String   @db.VarChar(64)
+  amount       Int      @default(1)
+  description  String?  @db.VarChar(256)
+  refType      String?  @db.VarChar(32)
+  refId        Int?
+  balanceAfter Int?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, quotaKey, createdAt])
+  @@index([accountId, createdAt])
 }
