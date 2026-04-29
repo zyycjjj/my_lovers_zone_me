@@ -198,6 +198,7 @@ model User {
   contentAssets ContentAsset[]
   contentPlans  ContentPlan[]
   quotaUsages   QuotaUsage[]
+  dailyCheckins DailyCheckin[]
 
   @@index([role])
 }
@@ -391,4 +392,20 @@ model QuotaUsage {
   @@index([userId, createdAt])
   @@index([userId, quotaKey, createdAt])
   @@index([accountId, createdAt])
+}
+
+model DailyCheckin {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  date        String   @db.VarChar(10)         // "2026-04-29"
+  mood        String   @db.VarChar(16)          // "energized" | "rushed" | "unsure" | "tired"
+  goalKey     String?  @db.VarChar(32)          // "publish" | "new_product" | "convert"
+  sourceHint  String?  @db.VarChar(512)         // 昨日联动提示 / AI 建议
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, createdAt])
+  @@index([mood])
 }

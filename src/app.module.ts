@@ -20,6 +20,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { ContentAssetsModule } from './content-assets/content-assets.module';
 import { ContentPlansModule } from './content-plans/content-plans.module';
 import { QuotaUsageModule } from './quota-usage/quota-usage.module';
+import { CheckinsModule } from './checkins/checkins.module';
 import { AppController } from './app.controller';
 
 const requestLogger = (req: Request, res: Response, next: () => void) => {
@@ -56,6 +57,7 @@ const requestLogger = (req: Request, res: Response, next: () => void) => {
     ContentAssetsModule,
     ContentPlansModule,
     QuotaUsageModule,
+    CheckinsModule,
   ],
   controllers: [AppController],
 })
