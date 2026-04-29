@@ -1,24 +1,29 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
-  Delete,
-  Patch,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { ContentPlansService } from './content-plans.service';
 
 @Controller('content-plans')
 export class ContentPlansController {
   constructor(private readonly service: ContentPlansService) {}
 
+  private uid(req: Request): number {
+    return (req as any).user?.id;
+  }
+
   @Post()
-  create(@Req() req, @Body() body: { title?: string; type?: string }) {
+  create(@Req() req: Request, @Body() body: { title?: string; type?: string }) {
     return this.service.create({
-      userId: req.user?.id,
+      userId: this.uid(req),
       title: body.title,
       type: body.type,
     });
@@ -26,13 +31,13 @@ export class ContentPlansController {
 
   @Get()
   listMine(
-    @Req() req,
+    @Req() req: Request,
     @Query('status') status?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
     return this.service.listMine({
-      userId: req.user?.id,
+      userId: this.uid(req),
       status: status as any,
       limit: limit ? parseInt(limit, 10) : undefined,
       offset: offset ? parseInt(offset, 10) : undefined,
@@ -40,24 +45,24 @@ export class ContentPlansController {
   }
 
   @Get(':id')
-  getDetail(@Req() req, @Param('id') id: string) {
+  getDetail(@Req() req: Request, @Param('id') id: string) {
     return this.service.getDetail({
-      userId: req.user?.id,
+      userId: this.uid(req),
       id: parseInt(id, 10),
     });
   }
 
   @Get(':id/progress')
-  getProgress(@Req() req, @Param('id') id: string) {
+  getProgress(@Req() req: Request, @Param('id') id: string) {
     return this.service.getProgress({
-      userId: req.user?.id,
-      id: parseInt(id, 10),
+      planId: parseInt(id, 10),
+      userId: this.uid(req),
     });
   }
 
   @Patch(':id/tasks/:taskId')
   updateTaskStatus(
-    @Req() req,
+    @Req() req: Request,
     @Param('id') id: string,
     @Param('taskId') taskId: string,
     @Body() body: { status: string; assetId?: number },
@@ -65,24 +70,24 @@ export class ContentPlansController {
     return this.service.updateTaskStatus({
       planId: parseInt(id, 10),
       taskId: parseInt(taskId, 10),
-      userId: req.user?.id,
+      userId: this.uid(req),
       status: body.status as any,
       assetId: body.assetId,
     });
   }
 
   @Patch(':id/archive')
-  archive(@Req() req, @Param('id') id: string) {
+  archive(@Req() req: Request, @Param('id') id: string) {
     return this.service.archive({
-      userId: req.user?.id,
+      userId: this.uid(req),
       id: parseInt(id, 10),
     });
   }
 
   @Delete(':id')
-  delete(@Req() req, @Param('id') id: string) {
+  delete(@Req() req: Request, @Param('id') id: string) {
     return this.service.delete({
-      userId: req.user?.id,
+      userId: this.uid(req),
       id: parseInt(id, 10),
     });
   }

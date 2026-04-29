@@ -162,8 +162,8 @@ export class EventService {
       orderBy: { date: 'desc' },
     });
 
-    const toolUsage = {};
-    const contentActions = { saved: 0, completed: 0, copied: 0, continued: 0, deleted: 0 };
+    const toolUsage: Record<string, number> = {};
+    const contentActions: Record<string, number> = { saved: 0, completed: 0, copied: 0, continued: 0, deleted: 0 };
     let totalActions = 0;
 
     for (const event of events) {
@@ -212,7 +212,7 @@ export class EventService {
         totalActions: total,
         toolBreakdown: dayEvents
           .filter((e) => e.type === 'tool_used')
-          .reduce((acc, e) => ({ ...acc, [e.toolKey]: (acc[e.toolKey] || 0) + e.count }), {}),
+          .reduce((acc, e) => ({ ...acc, [e.toolKey]: ((acc as Record<string, number>)[e.toolKey] || 0) + e.count }), {} as Record<string, number>),
       });
     }
 
