@@ -76,10 +76,12 @@ export class ContentAssetsService {
     userId: number;
     accountId?: number;
     limit?: number;
+    skip?: number;
     date?: string;
     status?: AssetStatus;
   }) {
     const take = Math.min(Math.max(input.limit ?? 20, 1), 100);
+    const skip = Math.max(input.skip ?? 0, 0);
     const where: Record<string, unknown> = input.accountId
       ? { OR: [{ accountId: input.accountId }, { userId: input.userId }] }
       : { userId: input.userId };
@@ -91,11 +93,17 @@ export class ContentAssetsService {
       where.status = input.status;
     }
 
-    return this.prisma.contentAsset.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take,
-    });
+    const [items, total] = await Promise.all([
+      this.prisma.contentAsset.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip,
+      }),
+      this.prisma.contentAsset.count({ where }),
+    ]);
+
+    return { items, total, limit: take, offset: skip };
   }
 
   async getStats(input: {
@@ -174,5 +182,25 @@ export class ContentAssetsService {
 
     await this.recordAction(input.userId, 'completed');
     return updated;
+  }
+
+  async remove(input: {
+    id: number;
+    userId: number;
+    accountId?: number;
+  }) {
+    const asset = await this.prisma.contentAsset.findFirst({
+      where: input.accountId
+        ? {
+            id: input.id,
+            OR: [{ accountId: input.accountId }, { userId: input.userId }],
+          }
+        : { id: input.id, userId: input.userId },
+      select: { id: true },
+    });
+
+    if (!asset) throw new NotFoundException('Content asset not found');
+
+    return this.prisma.contentAsset.delete({ where: { id: input.id } });
   }
 }

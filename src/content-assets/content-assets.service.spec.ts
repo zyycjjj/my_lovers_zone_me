@@ -44,6 +44,7 @@ const mockPrisma = {
     findFirst: jest.fn(),
     update: jest.fn(),
     count: jest.fn(),
+    delete: jest.fn(),
   },
   workspaceMember: {
     findFirst: jest.fn().mockResolvedValue({ workspaceId: 1 }),
@@ -108,8 +109,9 @@ describe('ContentAssetsService', () => {
   });
 
   describe('listMine', () => {
-    it('should return assets filtered by userId', async () => {
+    it('should return paginated assets filtered by userId', async () => {
       mockPrisma.contentAsset.findMany.mockResolvedValue(mockContentAssets);
+      mockPrisma.contentAsset.count.mockResolvedValue(2);
 
       const result = await service.listMine({ userId: 10, limit: 20 });
 
@@ -118,13 +120,26 @@ describe('ContentAssetsService', () => {
           where: { userId: 10 },
           orderBy: { createdAt: 'desc' },
           take: 20,
+          skip: 0,
         }),
       );
-      expect(result).toEqual(mockContentAssets);
+      expect(result.items).toEqual(mockContentAssets);
+      expect(result.total).toBe(2);
+    });
+
+    it('should support skip/offset for pagination', async () => {
+      mockPrisma.contentAsset.findMany.mockResolvedValue([mockContentAssets[1]]);
+      mockPrisma.contentAsset.count.mockResolvedValue(3);
+
+      const result = await service.listMine({ userId: 10, limit: 1, skip: 1 });
+
+      expect(result.items.length).toBe(1);
+      expect(result.offset).toBe(1);
     });
 
     it('should filter by date when provided', async () => {
       mockPrisma.contentAsset.findMany.mockResolvedValue([mockContentAssets[0]]);
+      mockPrisma.contentAsset.count.mockResolvedValue(1);
 
       await service.listMine({ userId: 10, date: '2026-04-29' });
 
@@ -142,6 +157,7 @@ describe('ContentAssetsService', () => {
 
     it('should filter by status when provided', async () => {
       mockPrisma.contentAsset.findMany.mockResolvedValue([mockContentAssets[1]]);
+      mockPrisma.contentAsset.count.mockResolvedValue(1);
 
       await service.listMine({ userId: 10, status: 'completed' });
 
@@ -154,6 +170,7 @@ describe('ContentAssetsService', () => {
 
     it('should use OR condition when accountId is provided', async () => {
       mockPrisma.contentAsset.findMany.mockResolvedValue(mockContentAssets);
+      mockPrisma.contentAsset.count.mockResolvedValue(2);
 
       await service.listMine({ userId: 10, accountId: 100 });
 
@@ -163,6 +180,7 @@ describe('ContentAssetsService', () => {
 
     it('should clamp limit between 1 and 100', async () => {
       mockPrisma.contentAsset.findMany.mockResolvedValue([]);
+      mockPrisma.contentAsset.count.mockResolvedValue(0);
 
       await service.listMine({ userId: 10, limit: 200 });
       expect(mockPrisma.contentAsset.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }));
@@ -227,6 +245,23 @@ describe('ContentAssetsService', () => {
       mockPrisma.contentAsset.findFirst.mockResolvedValue(null);
 
       await expect(service.markCompleted({ id: 999, userId: 10 })).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('remove', () => {
+    it('should delete an existing asset', async () => {
+      mockPrisma.contentAsset.findFirst.mockResolvedValue({ id: 1 });
+      mockPrisma.contentAsset.delete.mockResolvedValue({ id: 1 } as never);
+
+      const result = await service.remove({ id: 1, userId: 10 });
+
+      expect(mockPrisma.contentAsset.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+    });
+
+    it('should throw NotFoundException when asset not found', async () => {
+      mockPrisma.contentAsset.findFirst.mockResolvedValue(null);
+
+      await expect(service.remove({ id: 999, userId: 10 })).rejects.toThrow(NotFoundException);
     });
   });
 });

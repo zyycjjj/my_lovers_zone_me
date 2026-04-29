@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -47,16 +48,29 @@ export class ContentAssetsController {
   listMine(
     @Req() req: Request,
     @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
     @Query('date') date?: string,
     @Query('status') status?: string,
   ) {
-    const take = limit ? Number.parseInt(limit, 10) : undefined;
+    const take = limit ? Number.parseInt(limit, 10) : 20;
+    const skip = offset ? Number.parseInt(offset, 10) : 0;
     return this.contentAssets.listMine({
       userId: req.userId!,
       accountId: req.accountId,
-      limit: Number.isNaN(take) ? undefined : take,
+      limit: Number.isNaN(take) ? 20 : Math.min(Math.max(take, 1), 100),
+      skip: Number.isNaN(skip) ? 0 : Math.max(skip, 0),
       date: date?.trim() || undefined,
       status: status?.trim() as 'saved' | 'completed' | 'archived' | undefined,
+    });
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: '删除内容资产' })
+  remove(@Req() req: Request, @Param('id', ParseIntPipe) id: number) {
+    return this.contentAssets.remove({
+      id,
+      userId: req.userId!,
+      accountId: req.accountId,
     });
   }
 
