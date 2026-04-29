@@ -109,6 +109,8 @@ model AuthIdentity {
 
   @@unique([provider, providerUserId])
   @@index([accountId, provider])
+
+  @@map("authidentity")
 }
 
 model AuthSession {
@@ -126,6 +128,8 @@ model AuthSession {
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@index([accountId, expiredAt])
+
+  @@map("authsession")
 }
 
 model Workspace {
@@ -160,6 +164,8 @@ model WorkspaceMember {
 
   @@unique([workspaceId, accountId])
   @@index([accountId, status])
+
+  @@map("workspacemember")
 }
 
 model UserProfile {
@@ -181,6 +187,8 @@ model UserProfile {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
+
+  @@map("userprofile")
 }
 
 model User {
@@ -226,6 +234,8 @@ model PaymentOrder {
   @@index([userId, createdAt])
   @@index([accountId, createdAt])
   @@index([status, createdAt])
+
+  @@map("paymentorder")
 }
 
 model Subscription {
@@ -250,6 +260,8 @@ model AppConfig {
   value     String   @db.LongText
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("appconfig")
 }
 
 model ContentAsset {
@@ -275,6 +287,8 @@ model ContentAsset {
   @@index([accountId, createdAt])
   @@index([workspaceId, createdAt])
   @@index([status, createdAt])
+
+  @@map("contentasset")
 }
 
 model Signal {
@@ -351,6 +365,8 @@ model ContentPlan {
 
   @@index([userId, status, createdAt])
   @@index([userId, type])
+
+  @@map("contentplan")
 }
 
 model ContentPlanTask {
@@ -372,6 +388,8 @@ model ContentPlanTask {
 
   @@unique([planId, dayNumber])
   @@index([planId, status])
+
+  @@map("contentplantask")
 }
 
 model QuotaUsage {
@@ -392,6 +410,8 @@ model QuotaUsage {
   @@index([userId, createdAt])
   @@index([userId, quotaKey, createdAt])
   @@index([accountId, createdAt])
+
+  @@map("quotausage")
 }
 
 model DailyCheckin {
@@ -408,4 +428,6 @@ model DailyCheckin {
   @@unique([userId, date])
   @@index([userId, createdAt])
   @@index([mood])
+
+  @@map("dailycheckin")
 }
