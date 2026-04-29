@@ -44,12 +44,28 @@ export class ContentAssetsController {
 
   @Get('me')
   @ApiOperation({ summary: '我的内容资产' })
-  listMine(@Req() req: Request, @Query('limit') limit?: string) {
+  listMine(
+    @Req() req: Request,
+    @Query('limit') limit?: string,
+    @Query('date') date?: string,
+    @Query('status') status?: string,
+  ) {
     const take = limit ? Number.parseInt(limit, 10) : undefined;
     return this.contentAssets.listMine({
       userId: req.userId!,
       accountId: req.accountId,
       limit: Number.isNaN(take) ? undefined : take,
+      date: date?.trim() || undefined,
+      status: status?.trim() as 'saved' | 'completed' | 'archived' | undefined,
+    });
+  }
+
+  @Get('stats/me')
+  @ApiOperation({ summary: '我的内容资产统计' })
+  getMyStats(@Req() req: Request) {
+    return this.contentAssets.getStats({
+      userId: req.userId!,
+      accountId: req.accountId,
     });
   }
 
