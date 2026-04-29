@@ -11,9 +11,9 @@ const MOOD_LABELS: Record<MoodType, string> = {
 };
 
 const MOOD_HINTS: Record<MoodType, string> = {
-  energized: '有状态的时候，先生成一版能直接发的内容',
-  rushed: '时间紧的话，先出标题再挑一条最快的发出去',
-  unsure: '不确定方向的时候，从你最近做过的内容继续延伸',
+  energized: '状态好的时候，先出一版能直接发的内容',
+  rushed: '时间紧的话，先出标题挑一条最快的发',
+  unsure: '不确定方向的话，从最近做过的内容接着来',
   tired: '累了就先来一条，不用追求完美',
 };
 
