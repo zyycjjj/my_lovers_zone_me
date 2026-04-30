@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { getDateKey } from '../common/date';
 import { PaymentsService } from '../payments/payments.service';
+import { PlansService } from '../plans/plans.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -9,6 +10,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly payments: PaymentsService,
+    private readonly plans: PlansService,
   ) {}
 
   async summary() {
@@ -65,6 +67,64 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
+  }
+
+  async accounts(limit = 100) {
+    const db = this.prisma as any;
+    const accounts = await db.account.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        subscriptions: {
+          where: { status: 'active' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+    return accounts.map((a: any) => ({
+      id: a.id,
+      phone: a.phone,
+      displayName: a.displayName,
+      avatarUrl: a.avatarUrl,
+      status: a.status,
+      createdAt: a.createdAt,
+      subscription: a.subscriptions?.[0] ?? null,
+    }));
+  }
+
+  async manualActivate(input: {
+    accountId: number;
+    planKey: string;
+    note?: string;
+  }) {
+    const db = this.prisma as any;
+    const account = await db.account.findUnique({ where: { id: input.accountId } });
+    if (!account) throw new NotFoundException('Account not found');
+
+    const plan = await this.plans.getPlan(input.planKey as any);
+    if (!plan) throw new BadRequestException('Plan is disabled or invalid');
+
+    // 查找该 account 关联的 user，用作订单的 userId
+    const user = await db.user.findFirst();
+    const userId = user?.id ?? 1;
+
+    // 1. 虚拟一个订单
+    const order = await db.paymentOrder.create({
+      data: {
+        orderNo: `MO${Date.now()}${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`.slice(0, 32),
+        userId,
+        accountId: input.accountId,
+        planKey: input.planKey,
+        amountFen: plan.priceFen,
+        status: 'paid',
+        paidAt: new Date(),
+        adminNote: `[手动开通] ${input.note || ''}`.trim(),
+      },
+    });
+
+    // 2. 复用 approveOrder 流程
+    return this.payments.approveOrder(order.id, `[手动开通] ${input.note || ''}`.trim());
   }
 
   async events(limit = 100) {

@@ -31,10 +31,30 @@ export class AdminController {
   }
 
   @Get('users')
-  @ApiOperation({ summary: '后台用户列表' })
+  @ApiOperation({ summary: '后台用户列表（旧）' })
   async users(@Query('limit') limit?: string) {
     const take = limit ? Number(limit) : 50;
     return this.admin.users(Number.isNaN(take) ? 50 : take);
+  }
+
+  @Get('accounts')
+  @ApiOperation({ summary: '后台账号列表（含订阅状态）' })
+  async accounts(@Query('limit') limit?: string) {
+    const take = limit ? Number(limit) : 100;
+    return this.admin.accounts(Number.isNaN(take) ? 100 : take);
+  }
+
+  @Post('manual-activate')
+  @ApiOperation({ summary: '手动为用户开通套餐（虚拟订单+自动审核）' })
+  async manualActivate(
+    @Body()
+    body: {
+      accountId: number;
+      planKey: string;
+      note?: string;
+    },
+  ) {
+    return this.admin.manualActivate(body);
   }
 
   @Get('events')
