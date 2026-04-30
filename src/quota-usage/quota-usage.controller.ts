@@ -21,7 +21,7 @@ export class QuotaUsageController {
   constructor(private readonly service: QuotaUsageService) {}
 
   private uid(req: Request): number {
-    return (req as any).user?.id;
+    return (req as any).userId;
   }
 
   @Post()

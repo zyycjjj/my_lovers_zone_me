@@ -109,13 +109,19 @@ describe('CheckinsService', () => {
     });
 
     it('should count consecutive days correctly with today checkin', async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const getDateStr = (daysAgo: number) => {
+        const d = new Date();
+        d.setDate(d.getDate() - daysAgo);
+        const tz = process.env['APP_TIMEZONE'] || 'Asia/Shanghai';
+        return new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+      };
+      const today = getDateStr(0);
       mockPrisma.dailyCheckin.findMany.mockResolvedValue([
         { date: today },
-        { date: '2026-04-28' },
-        { date: '2026-04-27' },
-        { date: '2026-04-26' }, // gap here
-        { date: '2026-04-20' },
+        { date: getDateStr(1) },
+        { date: getDateStr(2) },
+        { date: getDateStr(3) }, // gap after this
+        { date: getDateStr(9) },
       ] as any);
 
       const result = await service.getStreakCount(1);
@@ -138,8 +144,8 @@ describe('CheckinsService', () => {
 
   describe('buildCheckinPanelData', () => {
     it('should return panel data with continue hint based on yesterday assets and goal', async () => {
-      const today = new Date().toISOString().slice(0, 10);
-      const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
+      const today = (() => { const d = new Date(); const tz = process.env['APP_TIMEZONE'] || 'Asia/Shanghai'; const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }); return fmt.format(d); })();
+      const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); const tz = process.env['APP_TIMEZONE'] || 'Asia/Shanghai'; const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }); return fmt.format(d); })();
 
       mockPrisma.dailyCheckin.findUnique
         .mockResolvedValueOnce(null) // todayCheckin
@@ -197,7 +203,7 @@ describe('CheckinsService', () => {
       expect(result.moodLabels.unsure).toBe('找灵感');
       expect(result.moodLabels.tired).toBe('先试试');
 
-      expect(result.moodHints.energized).toContain('有状态');
+      expect(result.moodHints.energized).toContain('状态好');
       expect(result.moodHints.rushed).toContain('时间紧');
       expect(result.moodHints.unsure).toContain('不确定');
       expect(result.moodHints.tired).toContain('累了');

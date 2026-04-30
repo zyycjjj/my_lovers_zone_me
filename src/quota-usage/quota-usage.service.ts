@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { getDateKey } from '../common/date';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -74,8 +75,10 @@ export class QuotaUsageService {
     const baseWhere: Record<string, any> = { userId: input.userId };
     if (input.accountId) baseWhere.accountId = input.accountId;
 
-    const today = new Date().toISOString().slice(0, 10);
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const today = getDateKey();
+    const weekAgoDate = new Date();
+    weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+    const weekAgo = getDateKey(weekAgoDate);
 
     const [todayTotal, weekTotal, allTotal, byQuotaKey] = await Promise.all([
       this.prisma.quotaUsage.aggregate({
@@ -212,7 +215,7 @@ export class QuotaUsageService {
       });
 
       if (user) {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getDateKey();
         const deleted = await this.prisma.event.deleteMany({
           where: {
             userId: user.id,

@@ -8,16 +8,19 @@ import {
   Post,
   Query,
   Req,
+  UseGuards,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { UserGuard } from '../auth/guards/user.guard';
 import { ContentPlansService } from './content-plans.service';
 
-@Controller('content-plans')
+@Controller('api/content-plans')
+@UseGuards(UserGuard)
 export class ContentPlansController {
   constructor(private readonly service: ContentPlansService) {}
 
   private uid(req: Request): number {
-    return (req as any).user?.id;
+    return (req as any).userId;
   }
 
   @Post()

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Subject } from 'rxjs';
+import { getDateKey } from '../common/date';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type ActivityEvent = {
@@ -144,7 +145,7 @@ export class EventService {
     date?: string,
   ) {
     const key = `content.${action}`;
-    const d = date || new Date().toISOString().slice(0, 10);
+    const d = date || getDateKey();
     return this.recordEvent(userId, 'button_used', `${key}${toolKey ? `.${toolKey}` : ''}`, d);
   }
 
@@ -152,7 +153,7 @@ export class EventService {
   async getUserBehaviorStats(userId: number, days: number = 30) {
     const since = new Date();
     since.setDate(since.getDate() - days);
-    const dateStr = since.toISOString().slice(0, 10);
+    const dateStr = getDateKey(since);
 
     const events = await this.prisma.event.findMany({
       where: {
@@ -199,7 +200,7 @@ export class EventService {
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().slice(0, 10);
+      const dateStr = getDateKey(d);
 
       const dayEvents = await this.prisma.event.findMany({
         where: { userId, date: dateStr },

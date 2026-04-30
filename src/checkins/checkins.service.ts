@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { getDateKey } from '../common/date';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type MoodType = 'energized' | 'rushed' | 'unsure' | 'tired';
@@ -169,12 +170,12 @@ export class CheckinsService {
   }
 
   private getTodayKey(): string {
-    return new Date().toISOString().slice(0, 10);
+    return getDateKey();
   }
 
   private getDateKeyDaysAgo(days: number): string {
     const d = new Date();
     d.setDate(d.getDate() - days);
-    return d.toISOString().slice(0, 10);
+    return getDateKey(d);
   }
 }
