@@ -3,6 +3,7 @@ import { AiService } from '../ai/ai.service';
 import { getDateKey } from '../common/date';
 import { EntitlementsService } from '../entitlements/entitlements.service';
 import { EventService } from '../event/event.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 function tryParseJson<T>(text: string): T | null {
   try {
@@ -59,7 +60,45 @@ export class ToolService {
     private readonly ai: AiService,
     private readonly entitlements: EntitlementsService,
     private readonly events: EventService,
+    private readonly prisma: PrismaService,
   ) {}
+
+  private async autoSaveAsset(input: {
+    userId: number;
+    accountId?: number;
+    toolKey: string;
+    title?: string;
+    content: string;
+    sourcePrompt?: string;
+  }) {
+    try {
+      const asset = await this.prisma.contentAsset.create({
+        data: {
+          userId: input.userId,
+          accountId: input.accountId,
+          toolKey: input.toolKey,
+          title: input.title?.trim() || null,
+          content: input.content.trim(),
+          sourcePrompt: input.sourcePrompt?.trim() || null,
+          status: 'saved',
+        },
+      });
+      return asset.id;
+    } catch {
+      // 自动保存失败不应影响主流程
+      return undefined;
+    }
+  }
+
+  private async resolveWorkspaceId(accountId?: number) {
+    if (!accountId) return undefined;
+    const member = await this.prisma.workspaceMember.findFirst({
+      where: { accountId, status: 'active' },
+      orderBy: { joinedAt: 'asc' },
+      select: { workspaceId: true },
+    });
+    return member?.workspaceId;
+  }
 
   private get titleFastModel() {
     return process.env['AI_TITLE_MODEL']?.trim() || undefined;
@@ -143,7 +182,15 @@ export class ToolService {
       }
     }
     await this.incrementToolUsedSafely(userId, 'script');
-    return { text };
+    const assetId = await this.autoSaveAsset({
+      userId,
+      accountId,
+      toolKey: 'script',
+      title: input.keyword.trim(),
+      content: text,
+      sourcePrompt: [input.keyword, input.audience, input.scene, input.style].filter(Boolean).join(' | '),
+    });
+    return { text, assetId };
   }
 
   async generateTitle(
@@ -224,7 +271,16 @@ export class ToolService {
     }
 
     await this.incrementToolUsedSafely(userId, 'title');
-    return { titles };
+    const content = titles.join('\n');
+    const assetId = await this.autoSaveAsset({
+      userId,
+      accountId,
+      toolKey: 'title',
+      title: input.keyword.trim(),
+      content,
+      sourcePrompt: [input.keyword, input.style].filter(Boolean).join(' | '),
+    });
+    return { titles, assetId };
   }
 
   async refineTalk(
@@ -303,13 +359,22 @@ export class ToolService {
       : [];
 
     await this.incrementToolUsedSafely(userId, 'refine');
-    return {
+    const result = {
       summaryLine: parsed?.summaryLine ?? '',
       sellingPoints,
       risks,
       suggestions,
       safeRewrites,
     };
+    const assetId = await this.autoSaveAsset({
+      userId,
+      accountId,
+      toolKey: 'refine',
+      title: '话术提炼',
+      content: JSON.stringify(result),
+      sourcePrompt: input.text.trim(),
+    });
+    return { ...result, assetId };
   }
 
   async commission(
