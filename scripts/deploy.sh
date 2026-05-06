@@ -90,10 +90,10 @@ pnpm prisma generate --schema prisma/schema.prisma
 # Fix: pnpm + Prisma v7 incompatibility — .prisma symlink may be missing or broken
 PRISMA_TARGET="node_modules/.prisma"
 if [ ! -e "${PRISMA_TARGET}" ] || [ ! -d "${PRISMA_TARGET}/client" ] 2>/dev/null; then
-  PRISMA_BASE=$(find node_modules/.pnpm -path '*prisma+client*/.prisma' -type d 2>/dev/null | head -1)
+  PRISMA_BASE=$(find node_modules/.pnpm -path '*prisma+client*/.prisma' -type d -print -quit 2>/dev/null)
   if [ -n "${PRISMA_BASE}" ]; then
     ABS_PRISMA_BASE=$(readlink -f "${PRISMA_BASE}" 2>/dev/null || echo "${PRISMA_BASE}")
-    rm -f "${PRISMA_TARGET}"
+    rm -rf "${PRISMA_TARGET}"
     ln -s "${ABS_PRISMA_BASE}" "${PRISMA_TARGET}"
     echo "[deploy] Fixed .prisma symlink -> ${ABS_PRISMA_BASE}"
   else
