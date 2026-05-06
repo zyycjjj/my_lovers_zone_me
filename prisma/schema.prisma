@@ -93,6 +93,7 @@ model Account {
   paymentOrders    PaymentOrder[]
   subscriptions    Subscription[]
   contentAssets    ContentAsset[]
+  explosionCases   ExplosionCase[]
 }
 
 model AuthIdentity {
@@ -179,12 +180,16 @@ model UserProfile {
   contentDirection      String?   @db.VarChar(128)
   targetPlatform        String?   @db.VarChar(64)
   experienceLevel       String?   @db.VarChar(32)
+  contentStyle          String?   @db.VarChar(64)
+  defaultAudience       String?   @db.VarChar(128)
+  brandKeywords         String?   @db.VarChar(512)
   onboardingCompletedAt DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
   account   Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  products  ProductProfile[]
 
   @@index([workspaceId])
 
@@ -207,6 +212,7 @@ model User {
   contentPlans  ContentPlan[]
   quotaUsages   QuotaUsage[]
   dailyCheckins DailyCheckin[]
+  explosionCases ExplosionCase[]
 
   @@index([role])
 }
@@ -282,6 +288,7 @@ model ContentAsset {
   account   Account?           @relation(fields: [accountId], references: [id], onDelete: SetNull)
   workspace Workspace?         @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
   tasks     ContentPlanTask[]
+  explosionCases ExplosionCase[]
 
   @@index([userId, createdAt])
   @@index([accountId, createdAt])
@@ -412,6 +419,51 @@ model QuotaUsage {
   @@index([accountId, createdAt])
 
   @@map("quotausage")
+}
+
+model ProductProfile {
+  id            Int      @id @default(autoincrement())
+  userProfileId Int
+  name          String   @db.VarChar(128)
+  category      String?  @db.VarChar(64)
+  price         String?  @db.VarChar(32)
+  sellingPoints String?  @db.VarChar(512)
+  targetAudience String? @db.VarChar(256)
+  platform      String?  @db.VarChar(64)
+  notes         String?  @db.VarChar(512)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId])
+
+  @@map("productprofile")
+}
+
+model ExplosionCase {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  accountId       Int?
+  sourceUrl       String?  @db.VarChar(512)
+  sourcePlatform  String?  @db.VarChar(32)
+  sourceContent   String?  @db.LongText
+  structureJson   String?  @db.LongText
+  myVersion       String?  @db.LongText
+  myVersionPrompt String?  @db.LongText
+  assetId         Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  asset   ContentAsset? @relation(fields: [assetId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([accountId, createdAt])
+  @@index([sourcePlatform])
+
+  @@map("explosioncase")
 }
 
 model DailyCheckin {

@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { EntitlementsModule } from '../entitlements/entitlements.module';
 import { KnowledgeModule } from '../knowledge/knowledge.module';
-import { ToolController } from './tool.controller';
-import { ToolService } from './tool.service';
+import { ViralController } from './viral.controller';
+import { ViralService } from './viral.service';
 
 @Module({
   imports: [EntitlementsModule, KnowledgeModule],
-  controllers: [ToolController],
-  providers: [ToolService],
+  controllers: [ViralController],
+  providers: [ViralService],
 })
-export class ToolModule {}
+export class ViralModule {}

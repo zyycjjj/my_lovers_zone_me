@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 type LimitWindow = 'daily' | 'total';
 
-const BILLABLE_TOOL_KEYS = ['title', 'script', 'refine'];
+const BILLABLE_TOOL_KEYS = ['title', 'script', 'refine', 'viral'];
 
 @Injectable()
 export class EntitlementsService {

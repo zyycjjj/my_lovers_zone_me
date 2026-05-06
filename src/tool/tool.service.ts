@@ -3,6 +3,7 @@ import { AiService } from '../ai/ai.service';
 import { getDateKey } from '../common/date';
 import { EntitlementsService } from '../entitlements/entitlements.service';
 import { EventService } from '../event/event.service';
+import { KnowledgeService } from '../knowledge/knowledge.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 function tryParseJson<T>(text: string): T | null {
@@ -60,6 +61,7 @@ export class ToolService {
     private readonly ai: AiService,
     private readonly entitlements: EntitlementsService,
     private readonly events: EventService,
+    private readonly knowledge: KnowledgeService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -130,6 +132,7 @@ export class ToolService {
     });
 
     const styleLabel = input.style === 'live' ? '直播口播' : '短视频种草';
+    const userContext = await this.knowledge.buildUserContext(accountId);
     const prompt = [
       `你是资深抖音带货编导。请为商品生成${styleLabel}脚本，面向真实转化。`,
       `要求输出以下结构，用中文，分段清晰：`,
@@ -143,6 +146,7 @@ export class ToolService {
       input.price != null ? `价格：${input.price}` : '',
       input.audience ? `目标人群：${input.audience}` : '',
       input.scene ? `使用场景：${input.scene}` : '',
+      userContext,
       `尽量避免极限词和医疗功效承诺。`,
     ]
       .filter(Boolean)
@@ -204,11 +208,13 @@ export class ToolService {
       toolKey: 'title',
     });
 
+    const userContext = await this.knowledge.buildUserContext(accountId);
     const prompt = [
       `你是抖音带货标题策划。请生成20条爆款标题，尽量口语化、短、自然。`,
       `要求返回JSON数组，数组元素是字符串标题，不要任何额外文字。`,
       `商品关键词：${input.keyword}`,
       input.style ? `风格：${input.style}` : '',
+      userContext,
       `避免极限词、医疗功效、金融承诺。`,
     ]
       .filter(Boolean)
@@ -295,6 +301,7 @@ export class ToolService {
     });
 
     const risks = detectRisks(input.text);
+    const userContext = await this.knowledge.buildUserContext(accountId);
     const prompt = [
       `你是直播话术合规与提炼助手。对输入话术做提炼与合规提醒。`,
       `请返回JSON对象，不要任何额外文字，字段如下：`,
@@ -306,6 +313,7 @@ export class ToolService {
       `}`,
       `要求：sellingPoints 3-5条，summaryLine 一句话，safeRewrites 给3条替换表达。`,
       `输入话术：${input.text}`,
+      userContext,
     ].join('\n');
 
     let raw = '';

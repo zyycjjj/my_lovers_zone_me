@@ -22,6 +22,8 @@ import { ContentPlansModule } from './content-plans/content-plans.module';
 import { QuotaUsageModule } from './quota-usage/quota-usage.module';
 import { CheckinsModule } from './checkins/checkins.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
+import { ViralModule } from './viral/viral.module';
+import { KnowledgeModule } from './knowledge/knowledge.module';
 import { AppController } from './app.controller';
 
 const requestLogger = (req: Request, res: Response, next: () => void) => {
@@ -60,6 +62,8 @@ const requestLogger = (req: Request, res: Response, next: () => void) => {
     QuotaUsageModule,
     CheckinsModule,
     RecommendationsModule,
+    ViralModule,
+    KnowledgeModule,
   ],
   controllers: [AppController],
 })
