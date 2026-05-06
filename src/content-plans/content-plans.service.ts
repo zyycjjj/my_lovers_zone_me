@@ -3,81 +3,108 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { AiService } from '../ai/ai.service';
+import { KnowledgeService } from '../knowledge/knowledge.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 type PlanStatus = 'active' | 'completed' | 'archived' | 'cancelled';
 type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'skipped';
+type PlanTaskDraft = {
+  dayNumber: number;
+  title: string;
+  description: string;
+  hint: string;
+  toolKey: string | null;
+};
 
-const DEFAULT_7DAY_TASKS = [
+const PLAN_TOOL_KEYS = new Set([
+  'title',
+  'script',
+  'refine',
+  'commission',
+  'viral',
+]);
+
+const DEFAULT_7DAY_TASKS: PlanTaskDraft[] = [
   {
     dayNumber: 1,
-    title: '明确本周目标',
-    description: '确定这周要发布的内容类型和数量',
-    hint: '先想清楚：发内容、上新、还是做转化？',
+    title: '先给这一周定个调',
+    description: '把这周要发什么、发几条先放到桌面上',
+    hint: '别把周一过成开卷考试，先挑一个最要紧的方向。',
     toolKey: null,
   },
   {
     dayNumber: 2,
-    title: '生成第一条内容',
-    description: '用AI工具生成你的第一篇内容草稿',
-    hint: '选择一个目标，开始生成标题或脚本',
-    toolKey: 'title',
+    title: '找一条顺眼的参考',
+    description: '看一条同类内容，拆出开头、卖点和结尾',
+    hint: '手里有链接的话，丢给爆款复刻，先让它替你拆一遍。',
+    toolKey: 'viral',
   },
   {
     dayNumber: 3,
-    title: '完善脚本细节',
-    description: '基于昨天的标题，生成完整脚本',
-    hint: '把标题变成可以直接说的内容',
-    toolKey: 'script',
+    title: '先攒一小把标题',
+    description: '围绕昨天的方向，先出一组能挑的标题',
+    hint: '挑一条顺眼的就行，别在标题池里泡太久。',
+    toolKey: 'title',
   },
   {
     dayNumber: 4,
-    title: '优化与调整',
-    description: '对生成的内容进行润色优化',
-    hint: '试试refine功能，让内容更适合你的风格',
-    toolKey: 'refine',
+    title: '把标题写成正文',
+    description: '基于选好的标题，写一版能直接改的正文',
+    hint: '草稿先落地，漂亮话可以第二轮再补。',
+    toolKey: 'script',
   },
   {
     dayNumber: 5,
-    title: '准备转化话术',
-    description: '为内容添加转化引导语',
-    hint: '好内容需要好结尾，试试commission工具',
-    toolKey: 'commission',
+    title: '把话说得更顺',
+    description: '把昨天的正文改得更像你平时会说的话',
+    hint: '哪里读着硌牙，就先修哪里。',
+    toolKey: 'refine',
   },
   {
     dayNumber: 6,
-    title: '整理素材库',
-    description: '保存这周生成的所有有用内容',
-    hint: '把觉得不错的内容都保存下来',
-    toolKey: null,
+    title: '补上转化结尾',
+    description: '给内容加一段购买理由、咨询引导或直播间话术',
+    hint: '结尾不用猛踩油门，把下一步说清楚就够了。',
+    toolKey: 'commission',
   },
   {
     dayNumber: 7,
-    title: '周复盘与规划',
-    description: '回顾本周完成情况，制定下周计划',
-    hint: '标记所有完成的任务，准备开始新一周',
+    title: '给这一周收个尾',
+    description: '看看这周做完了什么，顺手定下下周第一步',
+    hint: '把做完的勾一下，下次回来就不会一脸空白。',
     toolKey: null,
   },
 ];
 
 @Injectable()
 export class ContentPlansService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ai?: AiService,
+    private readonly knowledge?: KnowledgeService,
+  ) {}
 
   async create(input: {
     userId: number;
     title?: string;
     type?: string;
+    goal?: string;
+    industry?: string;
+    platform?: string;
+    dailyCount?: number;
   }) {
     const title = input.title?.trim() || '7天内容计划';
+    const tasks = await this.buildTasks(input);
     const plan = await this.prisma.contentPlan.create({
       data: {
         userId: input.userId,
         title,
+        description: this.buildPlanDescription(input),
         type: input.type || 'weekly',
         startedAt: new Date(),
         tasks: {
-          create: DEFAULT_7DAY_TASKS.map((task) => ({
+          create: tasks.map((task) => ({
             dayNumber: task.dayNumber,
             title: task.title,
             description: task.description,
@@ -90,6 +117,144 @@ export class ContentPlansService {
     });
 
     return plan;
+  }
+
+  private async buildTasks(input: {
+    userId: number;
+    goal?: string;
+    industry?: string;
+    platform?: string;
+    dailyCount?: number;
+  }): Promise<PlanTaskDraft[]> {
+    if (!this.ai) return DEFAULT_7DAY_TASKS;
+
+    try {
+      const userContext =
+        (await this.knowledge
+          ?.buildUserContext(input.userId)
+          .catch(() => '')) ?? '';
+      const content = await this.ai.chatText({
+        timeoutMs: 30000,
+        maxTokens: 1600,
+        system: '你熟悉短视频和图文内容排期。只输出 JSON，不要 Markdown。',
+        user: [
+          '生成一个 7 天内容排期。',
+          '每天 1 个主任务。任务要具体，像真人写给自己看的待办，不要口号。需要覆盖参考同类内容、标题、正文、修改、转化结尾、复盘。toolKey 只能是 title/script/refine/commission/viral/null。',
+          `目标：${input.goal?.trim() || '持续发内容'}`,
+          `行业/类目：${input.industry?.trim() || '未填写'}`,
+          `平台：${input.platform?.trim() || '未填写'}`,
+          `每日发布数量：${input.dailyCount && input.dailyCount > 0 ? input.dailyCount : 1}`,
+          userContext.trim(),
+          '输出格式：{"tasks":[{"dayNumber":1,"title":"...","description":"...","hint":"...","toolKey":"viral"}]}',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      });
+      return this.normalizeAiTasks(content);
+    } catch {
+      return this.personalizeFallbackTasks(input);
+    }
+  }
+
+  private normalizeAiTasks(content: string): PlanTaskDraft[] {
+    const jsonText = this.extractJson(content);
+    const parsed = JSON.parse(jsonText) as { tasks?: unknown[] };
+    const tasks = Array.isArray(parsed.tasks) ? parsed.tasks : [];
+    const normalized = tasks
+      .slice(0, 7)
+      .map((raw, index) => this.normalizeTask(raw, index + 1))
+      .filter((task): task is PlanTaskDraft => Boolean(task));
+
+    if (normalized.length !== 7)
+      throw new BadRequestException('Invalid plan tasks');
+    return normalized.map((task, index) => ({ ...task, dayNumber: index + 1 }));
+  }
+
+  private normalizeTask(
+    raw: unknown,
+    fallbackDay: number,
+  ): PlanTaskDraft | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const item = raw as Record<string, unknown>;
+    const title = this.cleanText(item.title, 40);
+    const description = this.cleanText(item.description, 140);
+    const hint = this.cleanText(item.hint, 120);
+    const rawToolKey =
+      typeof item.toolKey === 'string' ? item.toolKey.trim() : null;
+    const toolKey =
+      rawToolKey && PLAN_TOOL_KEYS.has(rawToolKey) ? rawToolKey : null;
+
+    if (!title || !description) return null;
+    return {
+      dayNumber:
+        typeof item.dayNumber === 'number' && Number.isFinite(item.dayNumber)
+          ? item.dayNumber
+          : fallbackDay,
+      title,
+      description,
+      hint: hint || '完成后记得保存结果，明天可以接着做。',
+      toolKey,
+    };
+  }
+
+  private extractJson(content: string) {
+    const trimmed = content.trim();
+    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1]?.trim();
+    if (fenced) return fenced;
+    const start = trimmed.indexOf('{');
+    const end = trimmed.lastIndexOf('}');
+    if (start >= 0 && end > start) return trimmed.slice(start, end + 1);
+    return trimmed;
+  }
+
+  private cleanText(value: unknown, maxLength: number) {
+    if (typeof value !== 'string') return '';
+    return value.trim().replace(/\s+/g, ' ').slice(0, maxLength);
+  }
+
+  private personalizeFallbackTasks(input: {
+    goal?: string;
+    industry?: string;
+    platform?: string;
+    dailyCount?: number;
+  }): PlanTaskDraft[] {
+    const goal = input.goal?.trim();
+    const industry = input.industry?.trim();
+    const platform = input.platform?.trim();
+    const prefix = [industry, platform].filter(Boolean).join(' · ');
+
+    return DEFAULT_7DAY_TASKS.map((task, index) => {
+      if (index === 0 && goal) {
+        return {
+          ...task,
+          description: `围绕「${goal}」，先定这周要发什么、发几条`,
+        };
+      }
+      if (index === 1 && prefix) {
+        return {
+          ...task,
+          description: `找一条 ${prefix} 的同类内容，拆出开头、卖点和结尾`,
+        };
+      }
+      return task;
+    });
+  }
+
+  private buildPlanDescription(input: {
+    goal?: string;
+    industry?: string;
+    platform?: string;
+    dailyCount?: number;
+  }) {
+    const parts = [
+      input.goal?.trim() ? `目标：${input.goal.trim()}` : '',
+      input.industry?.trim() ? `类目：${input.industry.trim()}` : '',
+      input.platform?.trim() ? `平台：${input.platform.trim()}` : '',
+      input.dailyCount && input.dailyCount > 0
+        ? `每日 ${input.dailyCount} 条`
+        : '',
+    ].filter(Boolean);
+    return parts.length ? parts.join('，') : null;
   }
 
   async listMine(input: {
@@ -193,17 +358,16 @@ export class ContentPlansService {
       totalTasks,
       completedTasks,
       inProgressTasks,
-      progressPercent: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+      progressPercent:
+        totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
       currentDay: this.getCurrentDay(plan),
     };
   }
 
-  private getCurrentDay(
-    plan: {
-      startedAt?: Date | null;
-      tasks: Array<{ status: string; dayNumber: number }>;
-    },
-  ): number | null {
+  private getCurrentDay(plan: {
+    startedAt?: Date | null;
+    tasks: Array<{ status: string; dayNumber: number }>;
+  }): number | null {
     if (!plan.startedAt) return null;
 
     const completedDays = plan.tasks

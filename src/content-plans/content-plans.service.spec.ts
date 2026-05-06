@@ -1,5 +1,7 @@
 import { ContentPlansService } from './content-plans.service';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
+import { AiService } from '../ai/ai.service';
+import { KnowledgeService } from '../knowledge/knowledge.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const mockPrisma = {
@@ -18,11 +20,20 @@ const mockPrisma = {
   },
 };
 
+const mockAi = {
+  chatText: jest.fn(),
+};
+
+const mockKnowledge = {
+  buildUserContext: jest.fn(),
+};
+
 describe('ContentPlansService', () => {
   let service: ContentPlansService;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockKnowledge.buildUserContext.mockResolvedValue('');
     service = new ContentPlansService(mockPrisma as unknown as PrismaService);
   });
 
@@ -58,7 +69,10 @@ describe('ContentPlansService', () => {
       const mockPlan = { id: 1, title: '我的自定义计划', tasks: [] };
       mockPrisma.contentPlan.create.mockResolvedValue(mockPlan);
 
-      const result = await service.create({ userId: 1, title: '我的自定义计划' });
+      const result = await service.create({
+        userId: 1,
+        title: '我的自定义计划',
+      });
       expect(result.title).toBe('我的自定义计划');
     });
 
@@ -72,6 +86,65 @@ describe('ContentPlansService', () => {
       await service.create({ userId: 1 });
       const createCall = mockPrisma.contentPlan.create.mock.calls[0][0];
       expect(createCall.data.tasks.create).toHaveLength(7);
+    });
+
+    it('should create personalized tasks from AI when available', async () => {
+      service = new ContentPlansService(
+        mockPrisma as unknown as PrismaService,
+        mockAi as unknown as AiService,
+        mockKnowledge as unknown as KnowledgeService,
+      );
+      mockAi.chatText.mockResolvedValue(
+        JSON.stringify({
+          tasks: Array.from({ length: 7 }, (_, index) => ({
+            dayNumber: index + 1,
+            title: `定制任务${index + 1}`,
+            description: `适合小红书的任务${index + 1}`,
+            hint: `提示${index + 1}`,
+            toolKey: index === 0 ? 'viral' : 'title',
+          })),
+        }),
+      );
+      mockPrisma.contentPlan.create.mockResolvedValue({ id: 1, tasks: [] });
+
+      await service.create({
+        userId: 1,
+        goal: '新品上架',
+        industry: '服饰',
+        platform: '小红书',
+        dailyCount: 2,
+      });
+
+      const createCall = mockPrisma.contentPlan.create.mock.calls[0][0];
+      expect(createCall.data.description).toBe(
+        '目标：新品上架，类目：服饰，平台：小红书，每日 2 条',
+      );
+      expect(createCall.data.tasks.create[0]).toEqual(
+        expect.objectContaining({
+          dayNumber: 1,
+          title: '定制任务1',
+          toolKey: 'viral',
+        }),
+      );
+      expect(mockKnowledge.buildUserContext).toHaveBeenCalledWith(1);
+    });
+
+    it('should fall back to local tasks when AI fails', async () => {
+      service = new ContentPlansService(
+        mockPrisma as unknown as PrismaService,
+        mockAi as unknown as AiService,
+        mockKnowledge as unknown as KnowledgeService,
+      );
+      mockAi.chatText.mockRejectedValue(new Error('AI unavailable'));
+      mockPrisma.contentPlan.create.mockResolvedValue({ id: 1, tasks: [] });
+
+      await service.create({ userId: 1, goal: '直播预热', platform: '抖音' });
+
+      const createCall = mockPrisma.contentPlan.create.mock.calls[0][0];
+      expect(createCall.data.tasks.create).toHaveLength(7);
+      expect(createCall.data.tasks.create[1]).toEqual(
+        expect.objectContaining({ toolKey: 'viral' }),
+      );
     });
   });
 
@@ -146,12 +219,19 @@ describe('ContentPlansService', () => {
         plan: { userId: 1 },
       };
       mockPrisma.contentPlanTask.findFirst.mockResolvedValue(mockTask);
-      mockPrisma.contentPlanTask.update.mockResolvedValue({ ...mockTask, status: 'completed', completedAt: new Date() });
+      mockPrisma.contentPlanTask.update.mockResolvedValue({
+        ...mockTask,
+        status: 'completed',
+        completedAt: new Date(),
+      });
       mockPrisma.contentPlanTask.findMany.mockResolvedValue([
         { status: 'completed' },
         { status: 'completed' },
       ]);
-      mockPrisma.contentPlan.update.mockResolvedValue({ id: 1, status: 'active' });
+      mockPrisma.contentPlan.update.mockResolvedValue({
+        id: 1,
+        status: 'active',
+      });
 
       const result = await service.updateTaskStatus({
         planId: 1,
@@ -209,7 +289,9 @@ describe('ContentPlansService', () => {
       };
       mockPrisma.contentPlanTask.findFirst.mockResolvedValue(mockTask);
       mockPrisma.contentPlanTask.update.mockResolvedValue(mockTask);
-      mockPrisma.contentPlanTask.findMany.mockResolvedValue([{ status: 'pending' }]);
+      mockPrisma.contentPlanTask.findMany.mockResolvedValue([
+        { status: 'pending' },
+      ]);
 
       await service.updateTaskStatus({
         planId: 1,
@@ -293,10 +375,12 @@ describe('ContentPlansService', () => {
         userId: 1,
         startedAt: new Date(),
         status: 'active',
-        tasks: Array(7).fill(null).map((_, i) => ({
-          dayNumber: i + 1,
-          status: 'completed',
-        })),
+        tasks: Array(7)
+          .fill(null)
+          .map((_, i) => ({
+            dayNumber: i + 1,
+            status: 'completed',
+          })),
       };
       mockPrisma.contentPlan.findFirst.mockResolvedValue(mockPlan);
 
@@ -307,9 +391,9 @@ describe('ContentPlansService', () => {
     it('should throw if plan not found', async () => {
       mockPrisma.contentPlan.findFirst.mockResolvedValue(null);
 
-      await expect(service.getProgress({ planId: 999, userId: 1 })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.getProgress({ planId: 999, userId: 1 }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -317,7 +401,10 @@ describe('ContentPlansService', () => {
     it('should archive a plan', async () => {
       const mockPlan = { id: 1, userId: 1 };
       mockPrisma.contentPlan.findFirst.mockResolvedValue(mockPlan);
-      mockPrisma.contentPlan.update.mockResolvedValue({ ...mockPlan, status: 'archived' });
+      mockPrisma.contentPlan.update.mockResolvedValue({
+        ...mockPlan,
+        status: 'archived',
+      });
 
       const result = await service.archive({ id: 1, userId: 1 });
       expect(result.status).toBe('archived');

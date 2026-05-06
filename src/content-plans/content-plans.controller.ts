@@ -24,11 +24,26 @@ export class ContentPlansController {
   }
 
   @Post()
-  create(@Req() req: Request, @Body() body: { title?: string; type?: string }) {
+  create(
+    @Req() req: Request,
+    @Body()
+    body: {
+      title?: string;
+      type?: string;
+      goal?: string;
+      industry?: string;
+      platform?: string;
+      dailyCount?: number;
+    },
+  ) {
     return this.service.create({
       userId: this.uid(req),
       title: body.title,
       type: body.type,
+      goal: body.goal,
+      industry: body.industry,
+      platform: body.platform,
+      dailyCount: body.dailyCount,
     });
   }
 
