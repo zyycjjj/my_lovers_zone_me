@@ -73,6 +73,12 @@ enum ContentAssetStatus {
   archived
 }
 
+enum SupportConnectionStatus {
+  invited
+  active
+  removed
+}
+
 model Account {
   id              Int           @id @default(autoincrement())
   phone           String?       @unique @db.VarChar(32)
@@ -94,6 +100,11 @@ model Account {
   subscriptions    Subscription[]
   contentAssets    ContentAsset[]
   explosionCases   ExplosionCase[]
+  supporterOwnedConnections SupportConnection[] @relation("SupportOwnerAccount")
+  supporterAcceptedConnections SupportConnection[] @relation("SupporterAccount")
+  communityPosts   CommunityPost[]
+  communityComments CommunityComment[]
+  communityReactions CommunityReaction[]
 }
 
 model AuthIdentity {
@@ -213,6 +224,11 @@ model User {
   quotaUsages   QuotaUsage[]
   dailyCheckins DailyCheckin[]
   explosionCases ExplosionCase[]
+  supportConnections SupportConnection[]
+  sharedSupportAssets SupportSharedAsset[]
+  communityPosts CommunityPost[]
+  communityComments CommunityComment[]
+  communityReactions CommunityReaction[]
 
   @@index([role])
 }
@@ -289,6 +305,8 @@ model ContentAsset {
   workspace Workspace?         @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
   tasks     ContentPlanTask[]
   explosionCases ExplosionCase[]
+  supportShares SupportSharedAsset[]
+  communityPosts CommunityPost[]
 
   @@index([userId, createdAt])
   @@index([accountId, createdAt])
@@ -439,6 +457,116 @@ model ProductProfile {
   @@index([userProfileId])
 
   @@map("productprofile")
+}
+
+model SupportConnection {
+  id                 Int                     @id @default(autoincrement())
+  ownerUserId        Int
+  ownerAccountId     Int?
+  supporterAccountId Int?
+  supporterName      String                  @db.VarChar(64)
+  supporterContact   String?                 @db.VarChar(128)
+  inviteCode         String                  @unique @db.VarChar(32)
+  note               String?                 @db.VarChar(255)
+  status             SupportConnectionStatus @default(invited)
+  acceptedAt         DateTime?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  ownerUser        User     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  ownerAccount     Account? @relation("SupportOwnerAccount", fields: [ownerAccountId], references: [id], onDelete: SetNull)
+  supporterAccount Account? @relation("SupporterAccount", fields: [supporterAccountId], references: [id], onDelete: SetNull)
+  sharedAssets     SupportSharedAsset[]
+
+  @@index([ownerUserId, status, createdAt])
+  @@index([ownerAccountId, status])
+  @@index([supporterAccountId, status])
+
+  @@map("supportconnection")
+}
+
+model SupportSharedAsset {
+  id           Int      @id @default(autoincrement())
+  connectionId Int
+  assetId      Int
+  ownerUserId  Int
+  note         String?  @db.VarChar(255)
+  createdAt    DateTime @default(now())
+
+  connection SupportConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  asset      ContentAsset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  ownerUser  User              @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, assetId])
+  @@index([ownerUserId, createdAt])
+  @@index([assetId])
+
+  @@map("supportsharedasset")
+}
+
+model CommunityPost {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  accountId   Int?
+  type        String   @db.VarChar(32)
+  title       String   @db.VarChar(128)
+  content     String   @db.LongText
+  platform    String?  @db.VarChar(64)
+  sourceUrl   String?  @db.VarChar(512)
+  assetId     Int?
+  status      String   @default("published") @db.VarChar(16)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account   Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  asset     ContentAsset? @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  comments  CommunityComment[]
+  reactions CommunityReaction[]
+
+  @@index([type, createdAt])
+  @@index([userId, createdAt])
+  @@index([accountId, createdAt])
+  @@index([assetId])
+
+  @@map("communitypost")
+}
+
+model CommunityComment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  accountId Int?
+  content   String   @db.VarChar(512)
+  createdAt DateTime @default(now())
+
+  post    CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([postId, createdAt])
+  @@index([userId, createdAt])
+
+  @@map("communitycomment")
+}
+
+model CommunityReaction {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  accountId Int?
+  kind      String   @db.VarChar(16)
+  createdAt DateTime @default(now())
+
+  post    CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@unique([postId, userId, kind])
+  @@index([postId, kind])
+  @@index([userId, createdAt])
+
+  @@map("communityreaction")
 }
 
 model ExplosionCase {
