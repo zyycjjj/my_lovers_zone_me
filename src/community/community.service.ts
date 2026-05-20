@@ -31,6 +31,11 @@ export class CommunityService {
         include: {
           account: { select: { displayName: true } },
           asset: { select: { id: true, toolKey: true, title: true } },
+          comments: {
+            orderBy: { createdAt: 'desc' },
+            take: 2,
+            include: { account: { select: { displayName: true } } },
+          },
           _count: { select: { comments: true, reactions: true } },
         },
       }),

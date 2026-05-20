@@ -16,6 +16,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       user: decodeURIComponent(url.username || ''),
       password: decodeURIComponent(url.password || ''),
       database,
+      connectTimeout: Number(process.env['DB_CONNECT_TIMEOUT_MS'] || 10000),
+      acquireTimeout: Number(process.env['DB_ACQUIRE_TIMEOUT_MS'] || 20000),
     });
     super({ adapter });
   }
